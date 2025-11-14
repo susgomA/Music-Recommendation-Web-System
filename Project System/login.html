@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Spookify</title>
+    <!-- Link to the shared auth stylesheet -->
+    <link rel="stylesheet" href="auth-styles.css">
+</head>
+<body>
+
+    <div class="auth-container">
+        <h1>Login</h1>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" required>
+                    <button type="button" id="toggle-password" class="toggle-password-btn">Show</button>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Login</button>
+        </form>
+
+        <p class="auth-switch">
+            Don't have an account? <a href="signup.html">Sign Up</a>
+        </p>
+        <a href="index.html" class="back-link">Back to Spookify</a>
+    </div>
+
+    <!-- Link to the shared auth script -->
+    <script src="auth-script.js" defer></script>
+</body>
+</html>

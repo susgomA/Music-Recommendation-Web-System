@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spookify - Music Recommendation</title>
+    <link rel="stylesheet" href="style.css">
+    </head>
+<body class="antialiased">
+
+    <!-- Navbar -->
+    <nav>
+        <div class="container">
+            <!-- Left Side: Logo -->
+            <!-- UPDATED: Link to index.html -->
+            <a href="index.html" class="logo-link transition-colors">
+                Spookify
+            </a>
+            
+            <!-- Right Side: Auth Links -->
+            <div class="auth-links">
+                <!-- UPDATED: Link to signup.html -->
+                <a href="signup.html" class="transition-colors">Sign up</a>
+                <span class="divider">/</span>
+                <!-- UPDATED: Link to login.html -->
+                <a href="login.html" class="transition-colors">Login</a>
+                <!-- 
+                LOGGED-IN STATE (Example)
+                <span>Hi, Username</span>
+                <a href="#" class="transition-colors">Logout</a>
+                -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main>
+        
+        <!-- Logo -->
+        <h1>Spookify</h1>
+
+        <!-- Preset Buttons -->
+        <div id="preset-buttons">
+            <button class="preset-btn">
+                Chill
+            </button>
+            <button class="preset-btn">
+                Workout
+            </button>
+            <button class="preset-btn">
+                Focus
+            </button>
+            <button class="preset-btn">
+                Party
+            </button>
+        </div>
+
+        <!-- Chat Log -->
+        <div id="chat-log">
+            <!-- Bot welcome message -->
+            <!-- UPDATED: Welcome message -->
+            <div class="chat-bubble chat-bubble-bot">
+                Welcome to Spookify! 
+            </div>
+            <!-- Messages will be added here by JS -->
+        </div>
+
+    </main>
+    
+    <!-- Input Form (Fixed at bottom) -->
+    <footer>
+        <form id="chat-form">
+            <input 
+                type="text" 
+                id="chat-input"
+                placeholder="What kind of music?" 
+                class="transition-all"
+            >
+            <button 
+                type="submit"
+                class="transition-all"
+            >
+                Send
+            </button>
+        </form>
+         <!-- Copyright Footer from image -->
+        <p class="copyright">
+            © 2025 BSCS 4A - Music Recommendation System
+        </p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
+
