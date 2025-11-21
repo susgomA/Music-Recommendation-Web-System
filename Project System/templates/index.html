@@ -12,23 +12,15 @@
     <nav>
         <div class="container">
             <!-- Left Side: Logo -->
-            <!-- UPDATED: Link to index.html -->
             <a href="{{ url_for('index') }}" class="logo-link transition-colors"> 
             Spookify
             </a>
             
             <!-- Right Side: Auth Links -->
             <div class="auth-links">
-                <!-- UPDATED: Link to signup.html -->
                 <a href="{{ url_for('signup') }}" class="transition-colors">Sign up</a>
                 <span class="divider">/</span>
-                <!-- UPDATED: Link to login.html -->
                 <a href="{{ url_for('login') }}" class="transition-colors">Login</a>
-                <!-- 
-                LOGGED-IN STATE (Example)
-                <span>Hi, Username</span>
-                <a href="#" class="transition-colors">Logout</a>
-                -->
             </div>
         </div>
     </nav>
@@ -55,14 +47,18 @@
             </button>
         </div>
 
+        <!-- MOVED: Expand/Shrink Button OUTSIDE the chat log -->
+        <div class="chat-controls">
+            <button id="toggle-chat-btn" type="button">
+                [+]
+            </button>
+        </div>
+
         <!-- Chat Log -->
         <div id="chat-log">
-            <!-- Bot welcome message -->
-            <!-- UPDATED: Welcome message -->
             <div class="chat-bubble chat-bubble-bot">
                 Welcome to Spookify! 
             </div>
-            <!-- Messages will be added here by JS -->
         </div>
 
     </main>
@@ -70,12 +66,12 @@
     <!-- Input Form (Fixed at bottom) -->
     <footer>
         <form id="chat-form">
-            <input 
-                type="text" 
+            <textarea 
                 id="chat-input"
                 placeholder="What kind of music?" 
                 class="transition-all"
-            >
+                rows="1"
+            ></textarea>
             <button 
                 type="submit"
                 class="transition-all"
@@ -91,4 +87,3 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
-

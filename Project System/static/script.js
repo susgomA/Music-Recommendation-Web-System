@@ -5,35 +5,67 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     const presetButtonsContainer = document.getElementById('preset-buttons');
     const sendButton = chatForm.querySelector('button[type="submit"]');
+    const toggleChatBtn = document.getElementById('toggle-chat-btn');
+
+    // --- Auto-Resize Textarea Logic ---
+    chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    // --- Handle Enter Key to Send ---
+    chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+    });
+
+    // --- Expand/Shrink Logic ---
+    function setChatExpansion(expand) {
+        if (expand) {
+            chatLog.classList.add('expanded');
+            toggleChatBtn.textContent = '[-]';
+        } else {
+            chatLog.classList.remove('expanded');
+            toggleChatBtn.textContent = '[+]';
+        }
+        // Scroll to bottom after transition triggers
+        setTimeout(scrollToBottom, 350); 
+    }
+
+    toggleChatBtn.addEventListener('click', () => {
+        const isExpanded = chatLog.classList.contains('expanded');
+        setChatExpansion(!isExpanded);
+    });
+
+    // --- Scroll Helper ---
+    function scrollToBottom() {
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
 
     // --- Helper Functions ---
 
-    /**
-     * Creates and appends a message bubble to the chat log.
-     * @param {string} message - The text to display
-     * @param {'user' | 'bot'} sender - The sender of the message
-     */
     function displayMessage(message, sender) {
         const messageElement = document.createElement('div');
         messageElement.classList.add('chat-bubble');
         
         if (sender === 'user') {
             messageElement.classList.add('chat-bubble-user');
-            messageElement.textContent = message;
+            messageElement.innerHTML = message;
         } else {
             messageElement.classList.add('chat-bubble-bot');
-            // Allow HTML for bot messages (e.g., links, formatting)
             messageElement.innerHTML = message; 
         }
         
         chatLog.appendChild(messageElement);
-        chatLog.scrollTop = chatLog.scrollHeight; // Scroll to the bottom
+        
+        // Scroll immediately
+        scrollToBottom();
+        // Scroll again slightly later to handle image loading or rendering delays
+        setTimeout(scrollToBottom, 50);
     }
 
-    /**
-     * Toggles the input and button state to show loading/waiting.
-     * @param {boolean} disabled
-     */
     function toggleInputState(disabled) {
         chatInput.disabled = disabled;
         sendButton.disabled = disabled;
@@ -41,23 +73,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- AI Communication Function (New Core Logic) ---
+    // --- AI Communication Function ---
 
-    /**
-     * Sends the user's message to the Flask backend's /chat endpoint.
-     * @param {string} message - The prompt text to send to the Gemini model.
-     */
     async function sendMessage(message) {
         if (message.trim() === "") return;
 
-        // 1. Display user message immediately
-        displayMessage(message, 'user');
-        chatInput.value = ''; // Clear input
+        // 1. Display user message
+        displayMessage(message.replace(/\n/g, '<br>'), 'user');
         
-        toggleInputState(true); // Disable input while waiting for AI
+        chatInput.value = ''; 
+        chatInput.style.height = 'auto'; // Reset height
+        
+        toggleInputState(true);
 
         try {
-            // 2. Fetch/POST request to the Flask backend
             const response = await fetch('/chat', {
                 method: 'POST',
                 headers: {
@@ -66,14 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ message: message })
             });
 
-            // Handle non-200 responses (e.g., 500 server error)
             if (!response.ok) {
                  throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
-            
-            // 3. Display AI response (from data.response key)
             displayMessage(data.response, 'bot');
 
         } catch (error) {
@@ -81,43 +107,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const errorMessage = "🤖 **Error**: Sorry, the recommender is temporarily offline. Please check the server logs.";
             displayMessage(errorMessage, 'bot');
         } finally {
-            toggleInputState(false); // Re-enable input
+            toggleInputState(false);
+            // One final scroll check
+            setTimeout(scrollToBottom, 100);
         }
     }
 
 
-    // --- Event Listeners (Modified) ---
+    // --- Event Listeners ---
     
-    // Handle form submission (User typing and pressing Enter/Send)
     chatForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const messageText = chatInput.value.trim();
         
         if (messageText) {
-            // Use the new sendMessage function instead of the placeholder
             sendMessage(messageText); 
         }
     });
 
-    // Handle preset button clicks (using event delegation)
     presetButtonsContainer.addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON' && e.target.classList.contains('preset-btn')) {
             const presetText = e.target.textContent.trim();
-            
-            // Construct the message based on the preset button
             const message = `${presetText}`;
-            
-            // Use the new sendMessage function instead of the placeholder
             sendMessage(message); 
         }
     });
-
-    // Optional: Add a welcome message after the DOM loads
-    const initialMessage = chatLog.querySelector('.chat-bubble-bot');
-    if (!initialMessage || initialMessage.textContent.includes('Welcome to Spookify')) {
-        // Only run this if the chat log is empty or only contains the default welcome
-        // This is necessary if you removed the HTML static message:
-        // displayMessage("Mabuhay! I'm your quirky OPM recommender. What kind of music are you looking for?", 'bot');
-    }
 
 });
