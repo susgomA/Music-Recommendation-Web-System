@@ -1,0 +1,174 @@
+/* Shared styles for login.html and signup.html */
+
+/* Base */
+html {
+    height: 100%;
+    box-sizing: border-box;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+body {
+    height: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 2rem;
+    /* --- From original style --- */
+    font-family: 'VT323', monospace;
+    background-color: #28192B;
+    color: #FFFFFF;
+}
+
+/* Auth Form Container */
+.auth-container {
+    max-width: 450px;
+    margin: 2rem auto 0 auto;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 2.5rem;
+    border-radius: 0.5rem;
+}
+
+.auth-container h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 2rem;
+}
+
+/* Form */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group-row {
+    display: flex;
+    gap: 1rem;
+}
+.form-group-row .form-group {
+    flex: 1;
+}
+
+.form-group label {
+    font-size: 1.125rem;
+}
+
+/* Input styles (matches chat input) */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    background-color: rgba(196, 181, 203, 0.5);
+    color: #FFFFFF;
+    font-family: 'VT323', monospace;
+    font-size: 1.25rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem; /* Slightly less round than chat */
+    border: 2px solid transparent;
+    outline: none;
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input:focus {
+    border-color: #C084FC;
+    background-color: rgba(196, 181, 203, 0.7);
+}
+
+/* Password Wrapper */
+.password-wrapper {
+    position: relative;
+    display: flex;
+}
+.password-wrapper input {
+    padding-right: 4rem; /* Make space for button */
+}
+.toggle-password-btn {
+    position: absolute;
+    right: 1px;
+    top: 1px;
+    bottom: 1px;
+    border: none;
+    background-color: rgba(0,0,0,0.3);
+    color: #FFF;
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    padding: 0 0.75rem;
+    border-radius: 0 0.25rem 0.25rem 0;
+    cursor: pointer;
+}
+.toggle-password-btn:hover {
+    background-color: rgba(0,0,0,0.5);
+}
+
+/* Checkbox */
+.form-group-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+.form-group-checkbox input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+}
+.form-group-checkbox label {
+    font-size: 0.875rem;
+    line-height: 1.2;
+}
+.form-group-checkbox a {
+    color: #D8B4FE;
+    text-decoration: underline;
+}
+
+/* Submit Button (matches Send button) */
+.submit-btn {
+    background-color: #FFFFFF;
+    color: #000000;
+    font-family: 'VT323', monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    padding: 1rem;
+    border-radius: 9999px;
+    border: none;
+    cursor: pointer;
+    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 1rem;
+}
+.submit-btn:hover {
+    background-color: #E9D5FF;
+}
+
+/* Bottom links */
+.auth-switch, .back-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 1.125rem;
+}
+
+/* --- ADDED THIS RULE --- */
+.back-link {
+    display: block; /* Makes the link a block element to be centered */
+}
+
+.auth-switch a, .back-link {
+    color: #D8B4FE;
+    font-weight: 700;
+    text-decoration: none;
+}
+.auth-switch a:hover, .back-link:hover {
+    text-decoration: underline;
+}
+
+
