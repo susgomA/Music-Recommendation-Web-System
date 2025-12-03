@@ -1,6 +1,22 @@
-/* Shared styles for login.html and signup.html */
+/* --- DARK MODE THEME (Matches Main Site) --- */
+:root {
+    --bg-color: #0f1c3f;       
+    --text-color: #ffffff;     
+    --label-color: #cbd5e1;
+    --footer-bg: #0b142e;
+    
+    --input-bg: #2d3f6b;       
+    --input-border: #4b5d88;
+    --input-focus: #38bdf8;
+    
+    --btn-primary-bg: #38bdf8; /* Cyan/Blue */
+    --btn-primary-text: #0f172a;
+    
+    --btn-secondary-border: #475569;
+    --btn-secondary-text: #ffffff;
+}
 
-/* Base */
+/* Base Reset */
 html {
     height: 100%;
     box-sizing: border-box;
@@ -11,23 +27,32 @@ html {
 
 body {
     height: 100%;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    flex-direction: column;
     margin: 0;
-    padding: 2rem;
-    /* --- From original style --- */
+    padding: 0;
     font-family: 'VT323', monospace;
-    background-color: #28192B;
-    color: #FFFFFF;
+    background-color: var(--bg-color);
+    color: var(--text-color);
 }
 
-/* Auth Form Container */
+/* Main Content - Centers the Form */
+main {
+    flex: 1; /* Take up all available space */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 2rem;
+}
+
+/* Auth Card Container */
 .auth-container {
-    max-width: 450px;
-    margin: 2rem auto 0 auto;
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 2.5rem;
-    border-radius: 0.5rem;
+    width: 100%;
+    max-width: 400px;
+    background-color: transparent; /* Seamless look */
+    margin-bottom: 2rem; /* Little spacing from footer */
 }
 
 .auth-container h1 {
@@ -36,9 +61,11 @@ body {
     text-align: center;
     margin-top: 0;
     margin-bottom: 2rem;
+    color: var(--text-color);
+    letter-spacing: 1px;
 }
 
-/* Form */
+/* Form Layout */
 form {
     display: flex;
     flex-direction: column;
@@ -60,30 +87,31 @@ form {
 }
 
 .form-group label {
-    font-size: 1.125rem;
+    font-size: 1.1rem;
+    color: var(--label-color);
 }
 
-/* Input styles (matches chat input) */
+/* Input Fields */
 input[type="text"],
 input[type="number"],
 input[type="date"],
 input[type="email"],
 input[type="password"] {
     width: 100%;
-    background-color: rgba(196, 181, 203, 0.5);
-    color: #FFFFFF;
-    font-family: 'VT323', monospace;
-    font-size: 1.25rem;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 1.2rem;
     padding: 0.75rem 1rem;
-    border-radius: 0.25rem; /* Slightly less round than chat */
-    border: 2px solid transparent;
+    border-radius: 4px; 
+    border: 1px solid var(--input-border);
     outline: none;
-    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
 }
 
 input:focus {
-    border-color: #C084FC;
-    background-color: rgba(196, 181, 203, 0.7);
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
 }
 
 /* Password Wrapper */
@@ -92,83 +120,115 @@ input:focus {
     display: flex;
 }
 .password-wrapper input {
-    padding-right: 4rem; /* Make space for button */
+    padding-right: 4rem; 
 }
 .toggle-password-btn {
     position: absolute;
-    right: 1px;
-    top: 1px;
-    bottom: 1px;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
     border: none;
-    background-color: rgba(0,0,0,0.3);
-    color: #FFF;
-    font-family: 'VT323', monospace;
-    font-size: 1rem;
-    padding: 0 0.75rem;
-    border-radius: 0 0.25rem 0.25rem 0;
+    background-color: transparent;
+    color: var(--input-focus);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
     cursor: pointer;
 }
 .toggle-password-btn:hover {
-    background-color: rgba(0,0,0,0.5);
+    text-decoration: underline;
 }
 
-/* Checkbox */
+/* Checkbox Section */
 .form-group-checkbox {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     margin-top: 0.5rem;
+    font-size: 0.9rem;
 }
 .form-group-checkbox input[type="checkbox"] {
     width: 1rem;
     height: 1rem;
+    accent-color: var(--btn-primary-bg);
 }
 .form-group-checkbox label {
-    font-size: 0.875rem;
     line-height: 1.2;
+    color: var(--label-color);
 }
 .form-group-checkbox a {
-    color: #D8B4FE;
+    color: var(--input-focus);
+    text-decoration: none;
+}
+.form-group-checkbox a:hover {
     text-decoration: underline;
 }
 
-/* Submit Button (matches Send button) */
+/* Primary Submit Button */
 .submit-btn {
-    background-color: #FFFFFF;
-    color: #000000;
-    font-family: 'VT323', monospace;
+    background-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    font-family: inherit;
     font-size: 1.25rem;
     font-weight: 700;
-    padding: 1rem;
-    border-radius: 9999px;
+    padding: 0.75rem;
+    border-radius: 9999px; /* Pill shape */
     border: none;
     cursor: pointer;
-    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
     margin-top: 1rem;
+    transition: filter 0.2s;
 }
 .submit-btn:hover {
-    background-color: #E9D5FF;
+    filter: brightness(1.1);
 }
 
-/* Bottom links */
-.auth-switch, .back-link {
+/* Auth Switch Text */
+.auth-switch {
     text-align: center;
     margin-top: 1.5rem;
-    font-size: 1.125rem;
+    font-size: 1rem;
+    color: var(--label-color);
 }
-
-/* --- ADDED THIS RULE --- */
-.back-link {
-    display: block; /* Makes the link a block element to be centered */
-}
-
-.auth-switch a, .back-link {
-    color: #D8B4FE;
+.auth-switch a {
+    color: var(--input-focus);
     font-weight: 700;
     text-decoration: none;
 }
-.auth-switch a:hover, .back-link:hover {
+.auth-switch a:hover {
     text-decoration: underline;
 }
 
+/* Secondary Back Button (Outline Style) */
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-decoration: none;
+    
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--btn-secondary-border);
+    padding: 0.6rem;
+    border-radius: 9999px; /* Pill shape */
+    transition: all 0.2s ease;
+}
 
+.back-link:hover {
+    border-color: var(--input-focus);
+    background-color: rgba(255,255,255,0.05);
+}
+
+/* Footer Strip */
+footer {
+    background-color: var(--footer-bg);
+    width: 100%;
+    padding: 1rem;
+    text-align: center;
+}
+.copyright {
+    color: #64748b;
+    font-size: 0.875rem; 
+    margin: 0;
+}

@@ -1,48 +1,36 @@
-// Shared script for login.html and signup.html
-
 document.addEventListener('DOMContentLoaded', () => {
     
-    const togglePasswordBtn = document.getElementById('toggle-password');
-    const passwordInput = document.getElementById('password');
+    // --- Auth References ---
+    const togglePasswordBtns = document.querySelectorAll('.toggle-password-btn');
 
-    // --- Show/Hide Password Logic ---
-    if (togglePasswordBtn && passwordInput) {
-        togglePasswordBtn.addEventListener('click', () => {
-            // Check the type of the password input
+    // =========================================
+    // SHOW/HIDE PASSWORD LOGIC
+    // =========================================
+    togglePasswordBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Prevent form submission
+            e.preventDefault();
+
+            // Find the input relative to this button
+            const wrapper = btn.closest('.password-wrapper');
+            const passwordInput = wrapper.querySelector('input');
+            
             if (passwordInput.type === 'password') {
-                // Change to text to show
                 passwordInput.type = 'text';
-                togglePasswordBtn.textContent = 'Hide';
+                btn.textContent = 'Hide';
             } else {
-                // Change back to password to hide
                 passwordInput.type = 'password';
-                togglePasswordBtn.textContent = 'Show';
+                btn.textContent = 'Show';
             }
         });
-    }
+    });
 
-    // --- Form Submission Handler (for testing) ---
-    // This just prevents the page from reloading.
-    // In a real app, you'd send this data to a server.
+    // --- Form Submission (Debugging) ---
     const form = document.querySelector('form');
     if (form) {
         form.addEventListener('submit', (e) => {
-            e.preventDefault(); 
-            // We don't use alert()
+            // e.preventDefault(); 
             console.log('Form submitted!');
-            // Here you would add your logic to process the login/signup
-            // For now, we'll just redirect to the main page on successful submit
-            
-            // Simulate a successful action and redirect
-            if (form.id === 'login-form') {
-                console.log('Logging in...');
-                // In a real app, you'd wait for server response
-                // window.location.href = 'index.html'; // Example redirect
-            } else if (form.id === 'signup-form') {
-                console.log('Signing up...');
-                // In a real app, you'd wait for server response
-                // window.location.href = 'login.html'; // Example redirect to login
-            }
         });
     }
 

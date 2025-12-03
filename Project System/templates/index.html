@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spookify - Music Recommendation</title>
+    <title>A3 Music - Music Recommendation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     </head>
 <body class="antialiased">
@@ -13,7 +13,7 @@
         <div class="container">
             <!-- Left Side: Logo -->
             <a href="{{ url_for('index') }}" class="logo-link transition-colors"> 
-            Spookify
+            A3 Music
             </a>
             
             <!-- Right Side: Auth Links -->
@@ -27,40 +27,23 @@
 
     <!-- Main Content Area -->
     <main>
-        
         <!-- Logo -->
-        <h1>Spookify</h1>
+        <h1>A3 Music</h1>
 
         <!-- Preset Buttons -->
         <div id="preset-buttons">
-            <button class="preset-btn">
-                Chill
-            </button>
-            <button class="preset-btn">
-                Workout
-            </button>
-            <button class="preset-btn">
-                Focus
-            </button>
-            <button class="preset-btn">
-                Party
-            </button>
-        </div>
-
-        <!-- MOVED: Expand/Shrink Button OUTSIDE the chat log -->
-        <div class="chat-controls">
-            <button id="toggle-chat-btn" type="button">
-                [+]
-            </button>
+            <button class="preset-btn">Chill</button>
+            <button class="preset-btn">Workout</button>
+            <button class="preset-btn">Focus</button>
+            <button class="preset-btn">Party</button>
         </div>
 
         <!-- Chat Log -->
         <div id="chat-log">
             <div class="chat-bubble chat-bubble-bot">
-                Welcome to Spookify! 
+                Welcome to A3 Music! 
             </div>
         </div>
-
     </main>
     
     <!-- Input Form (Fixed at bottom) -->
@@ -79,10 +62,12 @@
                 Send
             </button>
         </form>
-         <!-- Copyright Footer from image -->
-        <p class="copyright">
-            © 2025 BSCS 4A - Music Recommendation System
-        </p>
+        
+        <div class="footer-bottom">
+            <p class="copyright">
+                © 2025 BSCS 4A - Music Recommendation System
+            </p>
+        </div>
     </footer>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

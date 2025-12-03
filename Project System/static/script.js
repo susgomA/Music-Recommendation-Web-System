@@ -5,48 +5,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     const presetButtonsContainer = document.getElementById('preset-buttons');
     const sendButton = chatForm.querySelector('button[type="submit"]');
-    const toggleChatBtn = document.getElementById('toggle-chat-btn');
+
+    // Flag to track if the chat session has started
+    let isChatActive = false;
 
     // --- Auto-Resize Textarea Logic ---
-    chatInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    });
+    if(chatInput) {
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
 
-    // --- Handle Enter Key to Send ---
-    chatInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            chatForm.dispatchEvent(new Event('submit'));
-        }
-    });
+        // --- Handle Enter Key to Send ---
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    }
 
-    // --- Expand/Shrink Logic ---
-    function setChatExpansion(expand) {
-        if (expand) {
+    // --- Start Chat Session (Layout Transition) ---
+    function startChatSession() {
+        if (!isChatActive && presetButtonsContainer && chatLog) {
+            isChatActive = true;
+            presetButtonsContainer.classList.add('hidden');
             chatLog.classList.add('expanded');
-            toggleChatBtn.textContent = '[-]';
-        } else {
-            chatLog.classList.remove('expanded');
-            toggleChatBtn.textContent = '[+]';
+            setTimeout(scrollToBottom, 550); 
         }
-        // Scroll to bottom after transition triggers
-        setTimeout(scrollToBottom, 350); 
     }
 
-    toggleChatBtn.addEventListener('click', () => {
-        const isExpanded = chatLog.classList.contains('expanded');
-        setChatExpansion(!isExpanded);
-    });
-
-    // --- Scroll Helper ---
     function scrollToBottom() {
-        chatLog.scrollTop = chatLog.scrollHeight;
+        if(chatLog) chatLog.scrollTop = chatLog.scrollHeight;
     }
-
-    // --- Helper Functions ---
 
     function displayMessage(message, sender) {
+        if(!chatLog) return;
+        
         const messageElement = document.createElement('div');
         messageElement.classList.add('chat-bubble');
         
@@ -59,30 +54,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         chatLog.appendChild(messageElement);
-        
-        // Scroll immediately
         scrollToBottom();
-        // Scroll again slightly later to handle image loading or rendering delays
         setTimeout(scrollToBottom, 50);
     }
 
     function toggleInputState(disabled) {
-        chatInput.disabled = disabled;
-        sendButton.disabled = disabled;
-        sendButton.textContent = disabled ? 'Thinking...' : 'Send';
+        if(chatInput) chatInput.disabled = disabled;
+        if(sendButton) {
+            sendButton.disabled = disabled;
+            sendButton.textContent = disabled ? 'Thinking...' : 'Send';
+        }
     }
 
-
-    // --- AI Communication Function ---
-
+    // --- AI Communication ---
     async function sendMessage(message) {
         if (message.trim() === "") return;
 
-        // 1. Display user message
+        startChatSession();
+
         displayMessage(message.replace(/\n/g, '<br>'), 'user');
         
-        chatInput.value = ''; 
-        chatInput.style.height = 'auto'; // Reset height
+        if(chatInput) {
+            chatInput.value = ''; 
+            chatInput.style.height = 'auto'; 
+        }
         
         toggleInputState(true);
 
@@ -104,33 +99,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Fetch error:', error);
-            const errorMessage = "🤖 **Error**: Sorry, the recommender is temporarily offline. Please check the server logs.";
+            const errorMessage = "🤖 **Error**: Sorry, the recommender is temporarily offline.";
             displayMessage(errorMessage, 'bot');
         } finally {
             toggleInputState(false);
-            // One final scroll check
             setTimeout(scrollToBottom, 100);
         }
     }
 
-
     // --- Event Listeners ---
-    
-    chatForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const messageText = chatInput.value.trim();
-        
-        if (messageText) {
-            sendMessage(messageText); 
-        }
-    });
+    if (chatForm) {
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const messageText = chatInput.value.trim();
+            if (messageText) {
+                sendMessage(messageText); 
+            }
+        });
+    }
 
-    presetButtonsContainer.addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON' && e.target.classList.contains('preset-btn')) {
-            const presetText = e.target.textContent.trim();
-            const message = `${presetText}`;
-            sendMessage(message); 
-        }
-    });
-
+    if (presetButtonsContainer) {
+        presetButtonsContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('preset-btn')) {
+                const presetText = e.target.textContent.trim();
+                const message = `${presetText}`;
+                sendMessage(message); 
+            }
+        });
+    }
 });
