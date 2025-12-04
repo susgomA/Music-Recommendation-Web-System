@@ -20,15 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize app: Load history or start new
     function init() {
-        // Load the last active session ID from LocalStorage
-        currentSessionId = localStorage.getItem('spookify_current_session');
+        // UPDATED: Always start in "New Chat" mode
+        // We do NOT load the last session ID here anymore.
+        currentSessionId = null;
+        localStorage.removeItem('spookify_current_session');
         
-        // If we have a session, load its messages
-        if (currentSessionId) {
-            loadSession(currentSessionId);
-        }
-        
-        // Update the sidebar list regardless
+        // Just render the history list so users can access old chats if they want
         renderSidebarHistory();
     }
 
