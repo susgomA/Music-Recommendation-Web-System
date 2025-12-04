@@ -31,6 +31,11 @@
     /* Send Button */
     --send-btn-bg: #ffffff;    
     --send-btn-text: #0f1c3f;  
+
+    /* Sidebar */
+    --sidebar-bg: #0b142e;
+    --sidebar-width: 260px;
+    
 }
 
 html {
@@ -67,7 +72,7 @@ nav {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 50;
+    z-index: 60; /* Higher than sidebar */
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 nav .container {
@@ -80,7 +85,41 @@ nav .container {
     padding-left: 1rem;
     padding-right: 1rem;
     width: 100%;
+    /* Added to help position the menu button relative to this if needed, 
+       but we will move the button to the absolute edge */
+    position: relative;
 }
+
+/* --- UPDATED: Menu Button (Top Left Edge) --- */
+#menu-btn {
+    /* Fixed position to stay at the very top-left edge regardless of container padding */
+    position: fixed; 
+    top: 1rem; /* Align with navbar padding */
+    left: 1rem;
+    
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    z-index: 70; /* Above navbar content */
+}
+#menu-btn:hover {
+    color: var(--accent-color);
+    background-color: rgba(255,255,255,0.05);
+    border-radius: 50%;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    /* Removed gap since we might want tighter control */
+}
+
 nav .logo-link {
     font-size: 1.875rem; 
     line-height: 2.25rem;
@@ -109,6 +148,117 @@ nav .auth-links .divider {
     color: #64748b; 
 }
 
+/* --- Sidebar Styling --- */
+#sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px; /* Hidden by default */
+    width: var(--sidebar-width);
+    height: 100%;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid rgba(255,255,255,0.05);
+    z-index: 55; /* Under navbar */
+    padding-top: 5rem; /* Clear navbar height */
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 1rem;
+    transition: left 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebar.open {
+    left: 0;
+}
+
+.sidebar-header {
+    margin-bottom: 1.5rem;
+}
+.sidebar-header h2 {
+    font-size: 1.25rem;
+    color: var(--label-color);
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 0.5rem;
+}
+
+#new-chat-btn {
+    width: 100%;
+    background-color: var(--accent-color);
+    color: #0f1c3f;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+#new-chat-btn:hover {
+    filter: brightness(1.1);
+}
+
+#history-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* --- UPDATED: Individual History Item (Flex for X button) --- */
+.history-item {
+    background: rgba(255,255,255,0.05);
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--label-color);
+    transition: background 0.2s;
+    
+    /* Flex layout to separate title and delete button */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.history-item:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+.history-item.active {
+    background: var(--input-bg);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+}
+
+/* Title Truncation */
+.history-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1; /* Take up remaining space */
+    margin-right: 0.5rem;
+}
+
+/* Delete Button (X) */
+.delete-chat-btn {
+    background: transparent;
+    border: none;
+    color: #64748b; /* Subtle color initially */
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.25rem;
+    border-radius: 3px;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+.delete-chat-btn:hover {
+    color: #ef4444; /* Red on hover */
+    background-color: rgba(239, 68, 68, 0.1);
+    opacity: 1;
+}
+
 /* Main Content */
 main {
     flex-grow: 1;
@@ -125,7 +275,10 @@ main {
     padding-top: 6rem; /* Space for Navbar */
     padding-bottom: 12rem; /* Space for Footer */
     height: 100vh;
+    /* Optional: shift content when sidebar opens */
+    /* transition: margin-left 0.3s ease-in-out; */
 }
+
 main h1 {
     font-size: 3.75rem; 
     line-height: 1;
@@ -313,4 +466,10 @@ footer button[type="submit"]:hover {
 #chat-log::-webkit-scrollbar-thumb {
     background-color: var(--input-border);
     border-radius: 20px;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
