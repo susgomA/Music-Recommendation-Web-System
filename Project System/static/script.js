@@ -18,19 +18,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 1. INITIALIZATION & PERSISTENCE ---
     
-    // Initialize app: Load history or start new
     function init() {
-        // UPDATED: Always start in "New Chat" mode
-        // We do NOT load the last session ID here anymore.
-        currentSessionId = null;
-        localStorage.removeItem('spookify_current_session');
+        // UPDATED LOGIC:
+        // Check sessionStorage (survives reloads, clears on tab close)
+        currentSessionId = sessionStorage.getItem('spookify_current_session');
         
-        // Just render the history list so users can access old chats if they want
+        // If we found an active session ID in this tab, load it!
+        if (currentSessionId) {
+            loadSession(currentSessionId);
+        }
+        
+        // Always render the history list from permanent storage
         renderSidebarHistory();
     }
 
     // Load a specific session into the chat log
     function loadSession(sessionId) {
+        // History data lives in localStorage (permanent)
         const historyData = JSON.parse(localStorage.getItem('spookify_history') || '{}');
         const session = historyData[sessionId];
 
@@ -47,7 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             currentSessionId = sessionId;
-            localStorage.setItem('spookify_current_session', sessionId);
+            // Save active state to SESSION storage
+            sessionStorage.setItem('spookify_current_session', sessionId);
             
             // Scroll to bottom instantly
             setTimeout(() => {
@@ -66,7 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // If no session exists or we are starting a new one
         if (!currentSessionId) {
             currentSessionId = Date.now().toString(); 
-            localStorage.setItem('spookify_current_session', currentSessionId);
+            // Save active ID to SESSION storage
+            sessionStorage.setItem('spookify_current_session', currentSessionId);
             
             // Create new session object
             historyData[currentSessionId] = {
@@ -90,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Append message
         historyData[currentSessionId].messages.push({ text, sender });
         
-        // Save back to LocalStorage
+        // Save history content to LOCAL storage (Permanent)
         localStorage.setItem('spookify_history', JSON.stringify(historyData));
         
         // Update sidebar
@@ -104,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
         historyList.innerHTML = '';
         const historyData = JSON.parse(localStorage.getItem('spookify_history') || '{}');
         
-        // Convert object to array and sort by newest first
         const sessions = Object.values(historyData).sort((a, b) => b.timestamp - a.timestamp);
 
         sessions.forEach(session => {
@@ -157,7 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start a completely new chat
     function startNewChat() {
         currentSessionId = null;
-        localStorage.removeItem('spookify_current_session');
+        // Clear session storage so if we reload now, it stays on new chat
+        sessionStorage.removeItem('spookify_current_session');
         
         chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Welcome to A3 Music!</div>';
         presetButtonsContainer.classList.remove('hidden');
@@ -165,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isChatActive = false;
         
         renderSidebarHistory();
-        sidebar.classList.remove('open');
+        if(sidebar) sidebar.classList.remove('open');
     }
 
     // --- 2. UI LOGIC ---
@@ -204,32 +210,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- UPDATED: Start Chat Session with "Immediate" mode ---
     function startChatSession(immediate = false) {
         if (!isChatActive && presetButtonsContainer && chatLog) {
             isChatActive = true;
             
             if (immediate) {
-                // Disable transitions temporarily to snap into place
                 presetButtonsContainer.style.transition = 'none';
                 chatLog.style.transition = 'none';
                 
                 presetButtonsContainer.classList.add('hidden');
                 chatLog.classList.add('expanded');
                 
-                // Force reflow to apply changes instantly
                 void chatLog.offsetWidth; 
                 
-                // Re-enable transitions after a tiny delay
                 setTimeout(() => {
                     presetButtonsContainer.style.transition = '';
                     chatLog.style.transition = '';
                 }, 10);
                 
-                // Scroll immediately
                 setTimeout(scrollToBottom, 0);
             } else {
-                // Normal animated transition
                 presetButtonsContainer.classList.add('hidden');
                 chatLog.classList.add('expanded');
                 setTimeout(scrollToBottom, 550); 
@@ -272,11 +272,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- AI Communication ---
     async function sendMessage(message) {
         if (message.trim() === "") return;
 
-        // Normal start (animated)
         startChatSession(false);
 
         displayMessage(message.replace(/\n/g, '<br>'), 'user');
