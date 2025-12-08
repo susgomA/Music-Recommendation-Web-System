@@ -1,10 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
+    
     // --- Global DOM References ---
+    const togglePasswordBtns = document.querySelectorAll('.toggle-password-btn');
+    const signupForm = document.getElementById('signup-form');
+    const loginForm = document.getElementById('login-form');
+
+    // References for the Chat Page
     const chatLog = document.getElementById('chat-log');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const presetButtonsContainer = document.getElementById('preset-buttons');
-    const sendButton = chatForm.querySelector('button[type="submit"]');
+    const sendButton = chatForm ? chatForm.querySelector('button[type="submit"]') : null;
     
     // Sidebar References
     const menuBtn = document.getElementById('menu-btn');
@@ -12,327 +18,316 @@ document.addEventListener('DOMContentLoaded', () => {
     const newChatBtn = document.getElementById('new-chat-btn');
     const historyList = document.getElementById('history-list');
 
-    // --- State Management ---
-    let currentSessionId = null;
-    let isChatActive = false;
+    // --- State Management (Database-Driven) ---
+    let currentSessionId = null; 
+    let isChatActive = false; 
 
-    // --- 1. INITIALIZATION & PERSISTENCE ---
-    
-    function init() {
-        // UPDATED LOGIC:
-        // Check sessionStorage (survives reloads, clears on tab close)
-        currentSessionId = sessionStorage.getItem('spookify_current_session');
+    // =========================================
+    // 1. HELPER FUNCTIONS
+    // =========================================
+
+    /** Creates and appends a message bubble. */
+    function displayMessage(message, sender) {
+        if (!chatLog) return; 
         
-        // If we found an active session ID in this tab, load it!
-        if (currentSessionId) {
-            loadSession(currentSessionId);
-        }
-        
-        // Always render the history list from permanent storage
-        renderSidebarHistory();
-    }
-
-    // Load a specific session into the chat log
-    function loadSession(sessionId) {
-        // History data lives in localStorage (permanent)
-        const historyData = JSON.parse(localStorage.getItem('spookify_history') || '{}');
-        const session = historyData[sessionId];
-
-        if (session && session.messages.length > 0) {
-            // Expand UI IMMEDIATELY (True) to prevent animation on reload
-            startChatSession(true); 
-            
-            // Clear current log
-            chatLog.innerHTML = ''; 
-            
-            // Re-render messages
-            session.messages.forEach(msg => {
-                displayMessage(msg.text, msg.sender, false); // false = don't save again
-            });
-            
-            currentSessionId = sessionId;
-            // Save active state to SESSION storage
-            sessionStorage.setItem('spookify_current_session', sessionId);
-            
-            // Scroll to bottom instantly
-            setTimeout(() => {
-                chatLog.scrollTop = chatLog.scrollHeight;
-            }, 0);
-        } else {
-            // If session not found (e.g. deleted), start new
-            startNewChat();
-        }
-    }
-
-    // Save a message to the current session
-    function saveMessageToHistory(text, sender) {
-        let historyData = JSON.parse(localStorage.getItem('spookify_history') || '{}');
-        
-        // If no session exists or we are starting a new one
-        if (!currentSessionId) {
-            currentSessionId = Date.now().toString(); 
-            // Save active ID to SESSION storage
-            sessionStorage.setItem('spookify_current_session', currentSessionId);
-            
-            // Create new session object
-            historyData[currentSessionId] = {
-                id: currentSessionId,
-                title: text.substring(0, 30) + (text.length > 30 ? '...' : ''), 
-                timestamp: Date.now(),
-                messages: []
-            };
-        }
-
-        // Ensure session exists in data
-        if (!historyData[currentSessionId]) {
-             historyData[currentSessionId] = {
-                id: currentSessionId,
-                title: text.substring(0, 30) + '...',
-                timestamp: Date.now(),
-                messages: []
-            };
-        }
-
-        // Append message
-        historyData[currentSessionId].messages.push({ text, sender });
-        
-        // Save history content to LOCAL storage (Permanent)
-        localStorage.setItem('spookify_history', JSON.stringify(historyData));
-        
-        // Update sidebar
-        renderSidebarHistory();
-    }
-
-    // Render the list of chats in the sidebar
-    function renderSidebarHistory() {
-        if (!historyList) return;
-        
-        historyList.innerHTML = '';
-        const historyData = JSON.parse(localStorage.getItem('spookify_history') || '{}');
-        
-        const sessions = Object.values(historyData).sort((a, b) => b.timestamp - a.timestamp);
-
-        sessions.forEach(session => {
-            const itemContainer = document.createElement('div');
-            itemContainer.className = 'history-item';
-            if (session.id === currentSessionId) itemContainer.classList.add('active');
-            
-            const titleSpan = document.createElement('span');
-            titleSpan.className = 'history-title';
-            titleSpan.textContent = session.title || 'New Chat';
-            
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-chat-btn';
-            deleteBtn.innerHTML = '&times;'; 
-            deleteBtn.title = 'Delete chat';
-
-            itemContainer.addEventListener('click', () => {
-                if (session.id !== currentSessionId) {
-                    loadSession(session.id);
-                    renderSidebarHistory(); 
-                }
-            });
-
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); 
-                deleteSession(session.id);
-            });
-            
-            itemContainer.appendChild(titleSpan);
-            itemContainer.appendChild(deleteBtn);
-            historyList.appendChild(itemContainer);
-        });
-    }
-
-    // Delete a specific session
-    function deleteSession(sessionId) {
-        if(confirm("Delete this chat?")) {
-            const historyData = JSON.parse(localStorage.getItem('spookify_history') || '{}');
-            delete historyData[sessionId];
-            localStorage.setItem('spookify_history', JSON.stringify(historyData));
-            
-            if (sessionId === currentSessionId) {
-                startNewChat();
-            } else {
-                renderSidebarHistory(); 
-            }
-        }
-    }
-
-    // Start a completely new chat
-    function startNewChat() {
-        currentSessionId = null;
-        // Clear session storage so if we reload now, it stays on new chat
-        sessionStorage.removeItem('spookify_current_session');
-        
-        chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Welcome to A3 Music!</div>';
-        presetButtonsContainer.classList.remove('hidden');
-        chatLog.classList.remove('expanded');
-        isChatActive = false;
-        
-        renderSidebarHistory();
-        if(sidebar) sidebar.classList.remove('open');
-    }
-
-    // --- 2. UI LOGIC ---
-
-    if (menuBtn && sidebar) {
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); 
-            sidebar.classList.toggle('open');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (sidebar.classList.contains('open') && 
-                !sidebar.contains(e.target) && 
-                !menuBtn.contains(e.target)) {
-                
-                sidebar.classList.remove('open');
-            }
-        });
-    }
-
-    if (newChatBtn) {
-        newChatBtn.addEventListener('click', startNewChat);
-    }
-
-    if(chatInput) {
-        chatInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
-
-        chatInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                chatForm.dispatchEvent(new Event('submit'));
-            }
-        });
-    }
-
-    function startChatSession(immediate = false) {
-        if (!isChatActive && presetButtonsContainer && chatLog) {
-            isChatActive = true;
-            
-            if (immediate) {
-                presetButtonsContainer.style.transition = 'none';
-                chatLog.style.transition = 'none';
-                
-                presetButtonsContainer.classList.add('hidden');
-                chatLog.classList.add('expanded');
-                
-                void chatLog.offsetWidth; 
-                
-                setTimeout(() => {
-                    presetButtonsContainer.style.transition = '';
-                    chatLog.style.transition = '';
-                }, 10);
-                
-                setTimeout(scrollToBottom, 0);
-            } else {
-                presetButtonsContainer.classList.add('hidden');
-                chatLog.classList.add('expanded');
-                setTimeout(scrollToBottom, 550); 
-            }
-        }
-    }
-
-    function scrollToBottom() {
-        if(chatLog) chatLog.scrollTop = chatLog.scrollHeight;
-    }
-
-    function displayMessage(message, sender, save = true) {
-        if(!chatLog) return;
-        
-        if (save) {
-            saveMessageToHistory(message, sender);
-        }
-
         const messageElement = document.createElement('div');
         messageElement.classList.add('chat-bubble');
         
-        if (sender === 'user') {
-            messageElement.classList.add('chat-bubble-user');
-            messageElement.innerHTML = message;
-        } else {
-            messageElement.classList.add('chat-bubble-bot');
-            messageElement.innerHTML = message; 
-        }
+        const senderClass = sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-bot';
+        messageElement.classList.add(senderClass);
+        
+        messageElement.innerHTML = message; 
         
         chatLog.appendChild(messageElement);
-        scrollToBottom();
-        setTimeout(scrollToBottom, 50);
+        scrollToBottom(); 
     }
 
     function toggleInputState(disabled) {
-        if(chatInput) chatInput.disabled = disabled;
-        if(sendButton) {
-            sendButton.disabled = disabled;
-            sendButton.textContent = disabled ? 'Thinking...' : 'Send';
+        if (!chatInput || !sendButton) return;
+        chatInput.disabled = disabled;
+        sendButton.disabled = disabled;
+        sendButton.textContent = disabled ? 'Thinking...' : 'Send';
+    }
+    
+    function scrollToBottom() {
+        if(chatLog) chatLog.scrollTop = chatLog.scrollHeight;
+    }
+    
+    // UI function to handle chat area visual change
+    function startChatSession(immediate = false) {
+        if (!isChatActive && presetButtonsContainer && chatLog) {
+            isChatActive = true;
+            presetButtonsContainer.classList.add('hidden');
+            chatLog.classList.add('expanded');
         }
     }
 
+    // =========================================
+    // 2. DATABASE / PERSISTENCE FUNCTIONS
+    // =========================================
+    
+    /** REQUIRED: Deletes a specific session by calling the server endpoint. */
+    async function deleteSession(sessionId) {
+        if(confirm("Delete this chat?")) {
+            try {
+                const response = await fetch(`/delete_chat/${sessionId}`, { method: 'POST' });
+                if (response.ok) {
+                    if (sessionId === currentSessionId) {
+                        startNewChat(); 
+                    } else {
+                        renderSidebarHistory(); 
+                    }
+                } else {
+                    alert('Failed to delete chat on the server.');
+                }
+            } catch (error) {
+                console.error('Error deleting chat:', error);
+            }
+        }
+    }
+    
+    /** REQUIRED: Loads a specific session's messages into the chat log by fetching from the server. */
+    async function loadSession(sessionId) {
+        if (!chatLog) return false; // Return false on initial check if element is missing
+        
+        try {
+            const response = await fetch(`/load_session/${sessionId}`);
+            
+            // Check for 404 (session deleted)
+            if (!response.ok) {
+                 console.warn(`Attempted to load session ${sessionId} but received HTTP ${response.status}.`);
+                 return false;
+            }
+
+            const data = await response.json();
+
+            // Clear current log and render new session
+            chatLog.innerHTML = ''; 
+            
+            data.history.forEach(msg => {
+                const senderClass = msg.sender === 'user' ? 'user' : 'bot';
+                displayMessage(msg.content, senderClass);
+            });
+            
+            currentSessionId = sessionId;
+            sessionStorage.setItem('current_chat_session', sessionId);
+            startChatSession(true); // Start session UI and scroll
+            
+            return true; // Signal successful load
+            
+        } catch (error) {
+            console.error('Error loading session:', error);
+            chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Error loading session history.</div>';
+            return false; // Signal failure
+        }
+    }
+
+
+    /** Renders the list of chats in the sidebar by fetching from the server. */
+    async function renderSidebarHistory() {
+        if (!historyList) return;
+        
+        try {
+            const response = await fetch('/get_chat_list');
+            if (response.status === 401) return; 
+            if (!response.ok) throw new Error(`Failed to load chat list: ${response.status}`);
+            
+            const data = await response.json();
+            historyList.innerHTML = '';
+            
+            // 1. Determine the session ID to load (only if currentSessionId is null/invalid)
+            if (!currentSessionId && data.sessions.length > 0) {
+                 const latestSessionId = data.sessions[0].id;
+                 
+                 // If the list is fetched, attempt to load the latest session
+                 await loadSession(latestSessionId); 
+            }
+
+
+            // 2. Sidebar Rendering Loop (Use the final currentSessionId for 'active' class)
+            data.sessions.forEach(session => {
+                const itemContainer = document.createElement('div');
+                itemContainer.className = 'history-item';
+                if (session.id === currentSessionId) itemContainer.classList.add('active'); 
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'history-title';
+                titleSpan.textContent = session.title || 'New Chat';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-chat-btn';
+                deleteBtn.innerHTML = '&times;'; 
+                deleteBtn.title = 'Delete chat';
+
+                itemContainer.addEventListener('click', () => {
+                    if (session.id !== currentSessionId) {
+                        loadSession(session.id);
+                        renderSidebarHistory(); 
+                    }
+                });
+
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    deleteSession(session.id);
+                });
+                
+                itemContainer.appendChild(titleSpan);
+                itemContainer.appendChild(deleteBtn);
+                historyList.appendChild(itemContainer);
+            });
+
+        } catch (error) {
+            console.error('Error fetching chat list:', error);
+        }
+    }
+
+    /** Starts a completely new chat session by getting a new ID from the server. */
+    async function startNewChat() {
+        if (!chatLog) return; 
+
+        try {
+            const response = await fetch('/new_chat', { method: 'POST' });
+            
+            if (response.status === 401) {
+                 alert("You must be logged in to start a new chat.");
+                 window.location.href = '/login'; 
+                 return;
+            }
+
+            const data = await response.json();
+            
+            // 1. Update the client-side state with the NEW ID
+            currentSessionId = data.session_id; 
+            sessionStorage.setItem('current_chat_session', currentSessionId);
+            
+            // 2. Reset the UI to its initial state
+            chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Welcome to A3 Music!</div>';
+            isChatActive = false;
+            
+            if (presetButtonsContainer) presetButtonsContainer.classList.remove('hidden');
+            if (chatLog) chatLog.classList.remove('expanded'); 
+            
+            // 3. Re-render the sidebar to show the new, active session
+            renderSidebarHistory(); 
+            
+            const sidebar = document.getElementById('sidebar');
+            if(sidebar) sidebar.classList.remove('open');
+            
+        } catch (error) {
+            console.error('Error starting new chat:', error);
+            alert('Could not start new chat session due to a server error.');
+        }
+    }
+
+    /** Core Chat Logic */
     async function sendMessage(message) {
+        // ... (sendMessage logic remains the same) ...
         if (message.trim() === "") return;
 
-        startChatSession(false);
+        startChatSession(false); 
 
-        displayMessage(message.replace(/\n/g, '<br>'), 'user');
+        displayMessage(message.replace(/\n/g, '<br>'), 'user'); 
         
-        if(chatInput) {
-            chatInput.value = ''; 
-            chatInput.style.height = 'auto'; 
-        }
+        if(chatInput) { chatInput.value = ''; chatInput.style.height = 'auto'; }
         
         toggleInputState(true);
 
         try {
             const response = await fetch('/chat', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ message: message })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    message: message,
+                    session_id: currentSessionId // CRITICAL: Link message to the active session
+                })
             });
+            
+            const data = await response.json();
 
             if (!response.ok) {
-                 throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(data.response || `HTTP error! status: ${response.status}`);
             }
 
-            const data = await response.json();
+            // CRITICAL: Update currentSessionId if the server created a new one (first message in a new chat)
+            if (data.session_id && data.session_id !== currentSessionId) {
+                 currentSessionId = data.session_id;
+                 sessionStorage.setItem('current_chat_session', currentSessionId);
+                 renderSidebarHistory(); // Refresh sidebar to show the new title
+            }
+
             displayMessage(data.response, 'bot');
 
         } catch (error) {
             console.error('Fetch error:', error);
-            const errorMessage = "🤖 **Error**: Sorry, the recommender is temporarily offline.";
-            displayMessage(errorMessage, 'bot');
+            displayMessage(error.message || "🤖 Error: Could not connect to the recommender service.", 'bot');
         } finally {
             toggleInputState(false);
-            setTimeout(scrollToBottom, 100);
         }
     }
+    
+    
+    // =========================================
+    // 4. AUTH & UI EVENT LISTENERS
+    // =========================================
+    
+    // ... (All Authentication listeners remain the same) ...
+    
+    // FINAL EXECUTION BLOCK: ATTACHES LISTENERS AND STARTS ASYNC LOADING
 
-    // --- Event Listeners ---
-    if (chatForm) {
+    // --- FINAL EXECUTION ---
+    async function initializeChatState() {
+        if (!chatForm) return; 
+
+        // 1. Try to load the stored session ID from session storage
+        const storedSessionId = sessionStorage.getItem('current_chat_session');
+
+        if (storedSessionId) {
+            // Attempt to load the messages for the stored session. 
+            const loaded = await loadSession(storedSessionId);
+
+            // If loading the stored session failed (e.g., session was deleted on server), clear the state.
+            if (!loaded) {
+                currentSessionId = null;
+                sessionStorage.removeItem('current_chat_session');
+            }
+        }
+        
+        // 2. Now, load/render the sidebar. This function will default to the latest chat
+        // if currentSessionId is still null.
+        await renderSidebarHistory(); 
+
+        // 3. If after all attempts, no session is loaded (no history exists on server), 
+        // ensure the welcome message is visible.
+        if (!currentSessionId && chatLog) {
+            chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Welcome to A3 Music!</div>';
+        }
+
+        // --- Attach Chat Listeners (Synchronous) ---
         chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const messageText = chatInput.value.trim();
             if (messageText) {
                 sendMessage(messageText); 
             }
-        });
-    }
+        });      
+        
+        // Sidebar Toggle
+        if (menuBtn && sidebar) {
+            menuBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                sidebar.classList.toggle('open');
+            });
+        }
 
-    if (presetButtonsContainer) {
-        presetButtonsContainer.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('preset-btn')) {
-                const presetText = e.target.textContent.trim();
-                const message = `${presetText}`;
-                sendMessage(message); 
-            }
-        });
+        // New Chat Button
+        if (newChatBtn) {
+            newChatBtn.addEventListener('click', startNewChat);
+        }
+        
+        // ... (Add Textarea Resize and Preset Button Logic here) ...
     }
-
-    // --- Run Init ---
-    init();
+    
+    if (chatForm) {
+        initializeChatState();
+    }
 });

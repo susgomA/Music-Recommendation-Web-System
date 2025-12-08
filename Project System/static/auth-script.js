@@ -3,14 +3,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Global DOM References ---
     const togglePasswordBtns = document.querySelectorAll('.toggle-password-btn');
     const signupForm = document.getElementById('signup-form');
-    const loginForm = document.getElementById('login-form'); 
+    const loginForm = document.getElementById('login-form');
     
     // References for the Chat Page (may be null on signup/login pages)
     const chatLog = document.getElementById('chat-log');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const presetButtonsContainer = document.getElementById('preset-buttons');
-    const sendButton = chatForm ? chatForm.querySelector('button[type="submit"]') : null; 
+    const sendButton = chatForm ? chatForm.querySelector('button[type="submit"]') : null;
     
     // =========================================
     // HELPER FUNCTION: Display Message (Must be defined globally in this scope)
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {'user' | 'bot'} sender - The sender of the message
      */
     function displayMessage(message, sender) {
-        if (!chatLog) return; // Only execute if chatLog exists (i.e., we are on index.html)
+        if (!chatLog) return; 
         
         const messageElement = document.createElement('div');
         messageElement.classList.add('chat-bubble');
@@ -30,24 +30,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const senderClass = sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-bot';
         messageElement.classList.add(senderClass);
         
-        // Use innerHTML for bot responses to handle HTML line breaks (<br>)
         if (sender === 'user') {
             messageElement.textContent = message;
         } else {
-            messageElement.innerHTML = message; 
+            messageElement.innerHTML = message;
         }
         
         chatLog.appendChild(messageElement);
-        chatLog.scrollTop = chatLog.scrollHeight; // Scroll to the bottom
+        chatLog.scrollTop = chatLog.scrollHeight; 
     }
 
     /**
      * Toggles the input and button state to show loading/waiting.
-     * Only works if we are on the chat page.
      * @param {boolean} disabled
      */
     function toggleInputState(disabled) {
-        if (!chatInput || !sendButton) return; 
+        if (!chatInput || !sendButton) return;
         chatInput.disabled = disabled;
         sendButton.disabled = disabled;
         sendButton.textContent = disabled ? 'Thinking...' : 'Send';
@@ -59,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================
     togglePasswordBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             const wrapper = btn.closest('.password-wrapper');
             const inputField = wrapper ? wrapper.querySelector('input[type="password"], input[type="text"]') : null;
             
@@ -81,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================
     if (signupForm) {
         signupForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
 
             const formData = new FormData(signupForm);
             const data = Object.fromEntries(formData.entries());
@@ -92,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const response = await fetch('/register', { 
+                const response = await fetch('/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -102,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (response.ok) {
                     alert('Account created successfully! Please log in.');
-                    window.location.href = result.redirect_url || "/login"; 
+                    window.location.href = result.redirect_url || "/login";
                 } else {
                     alert('Signup Failed: ' + (result.error || 'Check the server logs.'));
                 }
@@ -120,13 +118,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
 
             const formData = new FormData(loginForm);
             const data = Object.fromEntries(formData.entries());
 
             try {
-                const response = await fetch('/login', { 
+                const response = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -136,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (response.ok && result.success) {
                     alert(result.message);
-                    window.location.href = result.redirect_url || "/"; 
+                    window.location.href = result.redirect_url || "/";
                 } else {
                     alert(result.error || 'Login failed. Check credentials.');
                 }
@@ -161,9 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/get_history');
             
             if (response.status === 401) {
-                // User is not logged in; the @login_required decorator on /get_history blocked the request
                 console.log("User not authenticated for history retrieval.");
-                // We let the static welcome message (in index.html) show.
                 return;
             }
             
@@ -174,17 +170,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             // Clear the default welcome message before rendering history
-            chatLog.innerHTML = ''; 
+            chatLog.innerHTML = '';
             
             // Render the history messages
             data.history.forEach(msg => {
-                const senderClass = msg.sender === 'user' ? 'user' : 'bot'; 
+                const senderClass = msg.sender === 'user' ? 'user' : 'bot';
                 displayMessage(msg.content, senderClass);
             });
             
             // If history is empty, show the welcome message
             if (data.history.length === 0) {
-                 displayMessage('Welcome to Spookify! What OPM songs are you in the mood for?', 'bot');
+                 displayMessage('Welcome to A3 Music! What OPM songs are you in the mood for?', 'bot');
             }
             
         } catch (error) {
@@ -206,14 +202,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- Submission Handler ---
         chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             const message = chatInput.value.trim();
             if (message === "") return;
             
             // 1. Display user message immediately
             displayMessage(message, 'user');
-            chatInput.value = ''; 
-            toggleInputState(true); 
+            chatInput.value = '';
+            toggleInputState(true);
 
             try {
                 // 2. Send message to Flask backend /chat
@@ -241,6 +237,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleInputState(false);
             }
         });
+        
+        // --- Preset Buttons Handler (Add this back from earlier steps) ---
+        if (presetButtonsContainer) {
+            presetButtonsContainer.addEventListener('click', function(e) {
+                if (e.target.classList.contains('preset-btn')) {
+                    const presetText = e.target.textContent.trim();
+                    const message = `Recommend OPM music for a ${presetText} mood/playlist.`; 
+                    // This uses the chat submission logic defined above
+                    // We call the inner function of the event listener with the message
+                    chatForm.dispatchEvent(new Event('submit')); 
+                    
+                    // Note: Since we are using an async submission, it's safer to just call 
+                    // sendMessage directly if it was defined, but we'll adapt to this structure.
+                    // For now, let's just make sure the input is set correctly for submission:
+                    chatInput.value = message;
+                    chatForm.dispatchEvent(new Event('submit')); // Trigger form submission
+                }
+            });
+        }
     }
-
 });

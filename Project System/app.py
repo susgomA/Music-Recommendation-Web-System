@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, current_user, login_required, login_user, logout_user
 from datetime import datetime
 from flask_bcrypt import Bcrypt 
+from sqlalchemy import func
 from google import genai
 from google.genai import types
 
@@ -42,6 +43,8 @@ class User(db.Model, UserMixin):
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # CRITICAL: Column to group messages into separate conversations
+    session_id = db.Column(db.String(50), nullable=False)
     role = db.Column(db.String(10), nullable=False) # 'user' or 'model'
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -50,20 +53,77 @@ class Message(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@app.route("/get_history", methods=["GET"])
+
+# --- Sidebar/History Management Routes ---
+
+@app.route("/get_chat_list", methods=["GET"])
 @login_required
-def get_history():
-    """Retrieves and formats the user's past chat messages for display."""
+def get_chat_list():
+    """Retrieves a list of distinct chat sessions for the current user's sidebar."""
     user_id = current_user.id
     
-    # Retrieve all messages for the user, ordered chronologically
-    db_history = Message.query.filter_by(user_id=user_id).order_by(Message.timestamp.asc()).all()
+    # Efficiently find the first message (title) and the latest timestamp for each session
+    latest_messages = db.session.query(
+        Message.session_id,
+        func.min(Message.timestamp).label('first_timestamp'), # Get the timestamp of the first message
+        func.max(Message.timestamp).label('latest_timestamp') # Get the timestamp of the last message
+    ).filter(
+        Message.user_id == user_id
+    ).group_by(Message.session_id).order_by(func.max(Message.timestamp).desc()).all()
     
-    # Format the messages into a simple list of dicts for the frontend
+    formatted_sessions = []
+    
+    for session_id, first_timestamp, latest_timestamp in latest_messages:
+        # Fetch the content of the very first message for the title
+        first_msg = Message.query.filter_by(user_id=user_id, session_id=session_id, timestamp=first_timestamp).first()
+        
+        title = first_msg.content if first_msg else "New Chat"
+        
+        formatted_sessions.append({
+            'id': session_id,
+            'title': title[:30] + '...' if len(title) > 30 else title,
+            'timestamp': latest_timestamp.isoformat()
+        })
+        
+    return jsonify({'sessions': formatted_sessions}), 200
+
+
+@app.route("/new_chat", methods=["POST"])
+@login_required
+def new_chat():
+    """Generates a new unique session ID for a new chat."""
+    # Use current timestamp as a simple unique ID
+    new_session_id = str(datetime.now().timestamp()).replace('.', '')
+    
+    return jsonify({'session_id': new_session_id}), 200
+
+
+@app.route("/delete_chat/<session_id>", methods=["POST"])
+@login_required
+def delete_chat(session_id):
+    """Deletes all messages associated with a specific session ID."""
+    try:
+        # Use synchronize_session=False for efficient bulk deletion
+        Message.query.filter_by(user_id=current_user.id, session_id=session_id).delete(synchronize_session=False)
+        db.session.commit()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/load_session/<session_id>", methods=["GET"])
+@login_required
+def load_session(session_id):
+    """Retrieves all messages for a specific session ID."""
+    user_id = current_user.id
+    
+    db_history = Message.query.filter_by(user_id=user_id, session_id=session_id).order_by(Message.timestamp.asc()).all()
+    
     formatted_history = []
     for msg in db_history:
         formatted_history.append({
-            'sender': msg.role, # 'user' or 'model'
+            'sender': msg.role, 
             'content': msg.content 
         })
         
@@ -103,26 +163,25 @@ except Exception as e:
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", current_user=current_user)
 
 @app.route("/signup")
 def signup():
     return render_template("signup.html") 
 
-# --- NEW ROUTE: USER REGISTRATION ---
+# --- USER REGISTRATION ---
 @app.route("/register", methods=["POST"])
 def register():
+    # ... (Your /register route logic remains the same) ...
     data = request.get_json()
     
-    # Extract data from the JSON payload sent by the frontend
     name = data.get('name')
     username = data.get('username')
     email = data.get('email')
     password = data.get('password')
     age = data.get('age')
-    birthday_str = data.get('birthday') # e.g., '2003-12-01'
+    birthday_str = data.get('birthday')
 
-    # 1. Validation Checks
     if not all([username, email, password, name, age, birthday_str]):
         return jsonify({'error': 'Missing required fields.'}), 400
 
@@ -133,13 +192,10 @@ def register():
         return jsonify({'error': 'Email is already in use.'}), 409
 
     try:
-        # 2. Hash Password and Convert Birthday
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        # Use the standard HTML date format for parsing (YYYY-MM-DD)
         birthday_date = datetime.strptime(birthday_str, '%Y-%m-%d').date() 
         age_int = int(age)
 
-        # 3. Create and Save New User
         user = User(
             name=name,
             username=username,
@@ -152,11 +208,9 @@ def register():
         db.session.add(user)
         db.session.commit()
         
-        # Success response with redirect instruction
         return jsonify({'message': 'User registered successfully', 'redirect_url': url_for('login')}), 201
 
     except ValueError:
-        # Catches errors if age is not an integer or birthday is in the wrong format
         return jsonify({'error': 'Invalid format for age or birthday.'}), 400
     except Exception as e:
         db.session.rollback()
@@ -164,7 +218,7 @@ def register():
         return jsonify({'error': 'Internal server error during registration.'}), 500
 
 
-# --- LOGIN ROUTE (Using POST for AJAX and GET for rendering page) ---
+# --- LOGIN ROUTE ---
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -173,7 +227,6 @@ def login():
     if request.method == 'GET':
         return render_template('login.html', title='Login')
     
-    # POST handling for AJAX
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
@@ -210,14 +263,20 @@ def chat():
 
     user_input = request.json.get("message")
     user_id = current_user.id 
+    
+    # CRITICAL: Get session_id from the frontend request
+    session_id = request.json.get("session_id")
+    if not session_id:
+        # If no session ID is provided (e.g., first message ever), create one.
+        session_id = str(datetime.now().timestamp()).replace('.', '')
 
     if not user_input:
         return jsonify({"response": "Please enter a message."}), 400
 
-    # 1. Retrieve History from Database (Ordered by time)
-    db_history = Message.query.filter_by(user_id=user_id).order_by(Message.timestamp.asc()).all()
+    # 1. Retrieve History for the SPECIFIC SESSION
+    db_history = Message.query.filter_by(user_id=user_id, session_id=session_id).order_by(Message.timestamp.asc()).all()
     
-    # 2. Convert DB messages into the Gemini API format (types.Content objects)
+    # 2. Convert DB messages into the Gemini API format
     history_for_gemini = [
         types.Content(
             role=msg.role,
@@ -228,12 +287,12 @@ def chat():
 
     # --- Database Operations (Within a try block for safety) ---
     try:
-        # 3. Save User Message to DB immediately (for logging and rollback)
-        user_message_db = Message(user_id=user_id, role='user', content=user_input)
+        # 3. Save User Message with the session_id
+        user_message_db = Message(user_id=user_id, session_id=session_id, role='user', content=user_input)
         db.session.add(user_message_db)
         db.session.commit()
 
-        # 4. Create a transient chat session with the full history + new message
+        # 4. Create a transient chat session with the full history
         chat_session = client.chats.create(
             model="gemini-flash-latest",
             config=generate_content_config,
@@ -244,12 +303,13 @@ def chat():
         response = chat_session.send_message(user_input)
         response_text = response.text
 
-        # 6. Save Model Response to DB
-        model_message_db = Message(user_id=user_id, role='model', content=response_text)
+        # 6. Save Model Response with the session_id
+        model_message_db = Message(user_id=user_id, session_id=session_id, role='model', content=response_text)
         db.session.add(model_message_db)
         db.session.commit()
         
-        return jsonify({"response": response_text})
+        # Return response AND the session_id so the frontend can update its state
+        return jsonify({"response": response_text, "session_id": session_id}), 200
 
     except Exception as e:
         # 7. If any API or database error occurs, rollback the user message

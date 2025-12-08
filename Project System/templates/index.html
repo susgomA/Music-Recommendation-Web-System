@@ -29,9 +29,21 @@
             
             <!-- Right Side: Auth Links -->
             <div class="auth-links">
+                
+                {% if current_user.is_authenticated %}
+                <span class="welcome-message">
+                    Hello, {{ current_user.username }}!
+                </span>
+                <a href="{{ url_for('logout') }}" class="transition-colors logout-link">
+                    Logout
+                </a>
+                
+                {% else %}
                 <a href="{{ url_for('signup') }}" class="transition-colors">Sign up</a>
                 <span class="divider">/</span>
                 <a href="{{ url_for('login') }}" class="transition-colors">Login</a>
+                
+                {% endif %}
             </div>
         </div>
     </nav>
