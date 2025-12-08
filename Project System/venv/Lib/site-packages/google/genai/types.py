@@ -2497,12 +2497,13 @@ are recommended to pass/receive Json Schema directly to/from the API. For exampl
             'defs',
         ]:
           raise ValueError(
-              f'JSONSchema field "{field_name}" is not supported by the '
-              'Schema object. And the "raise_error_on_unsupported_field" '
-              'argument is set to True. If you still want to convert '
-              'it into the Schema object, please either remove the field '
-              f'"{field_name}" from the JSONSchema object, or leave the '
-              '"raise_error_on_unsupported_field" unset.'
+              f'JSONSchema field "{field_name}" is not supported by the Schema'
+              ' object. And the "raise_error_on_unsupported_field" argument is'
+              ' set to True. If you still want to convert it into the Schema'
+              f' object, please either remove the field "{field_name}" from the'
+              ' JSONSchema object, leave the'
+              ' "raise_error_on_unsupported_field" unset, or try using'
+              ' response_json_schema instead.'
           )
         if (
             field_name in gemini_api_unsupported_field_names
@@ -4942,6 +4943,9 @@ class GenerateContentConfig(_common.BaseModel):
       object](https://spec.openapis.org/oas/v3.0.3#schema).
       If set, a compatible response_mime_type must also be set.
       Compatible mimetypes: `application/json`: Schema for JSON response.
+
+      If `response_schema` doesn't process your schema correctly, try using
+      `response_json_schema` instead.
       """,
   )
   response_json_schema: Optional[Any] = Field(
@@ -5159,6 +5163,9 @@ class GenerateContentConfigDict(TypedDict, total=False):
       object](https://spec.openapis.org/oas/v3.0.3#schema).
       If set, a compatible response_mime_type must also be set.
       Compatible mimetypes: `application/json`: Schema for JSON response.
+
+      If `response_schema` doesn't process your schema correctly, try using
+      `response_json_schema` instead.
       """
 
   response_json_schema: Optional[Any]
@@ -5436,6 +5443,13 @@ class CitationMetadata(_common.BaseModel):
       repositories.
       """,
   )
+
+  @model_validator(mode='before')
+  @classmethod
+  def _rename_citation_sources(cls, data: Any) -> Any:
+    if isinstance(data, dict) and 'citationSources' in data:
+      data['citations'] = data.pop('citationSources')
+    return data
 
 
 class CitationMetadataDict(TypedDict, total=False):
@@ -11859,6 +11873,26 @@ class _CancelTuningJobParametersDict(TypedDict, total=False):
 
 _CancelTuningJobParametersOrDict = Union[
     _CancelTuningJobParameters, _CancelTuningJobParametersDict
+]
+
+
+class CancelTuningJobResponse(_common.BaseModel):
+  """Empty response for tunings.cancel method."""
+
+  sdk_http_response: Optional[HttpResponse] = Field(
+      default=None, description="""Used to retain the full HTTP response."""
+  )
+
+
+class CancelTuningJobResponseDict(TypedDict, total=False):
+  """Empty response for tunings.cancel method."""
+
+  sdk_http_response: Optional[HttpResponseDict]
+  """Used to retain the full HTTP response."""
+
+
+CancelTuningJobResponseOrDict = Union[
+    CancelTuningJobResponse, CancelTuningJobResponseDict
 ]
 
 
