@@ -93,9 +93,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // =========================================
+    // 2. AUTOMATIC AGE & BIRTHDAY RESTRICTION (NEW)
+    // =========================================
+    if (signupForm) {
+        const birthdayInput = document.getElementById('birthday');
+        const ageInput = document.getElementById('age');
+
+        if (birthdayInput && ageInput) {
+            // A. Disable manual typing in Age
+            ageInput.readOnly = true; 
+            // Optional: make it look disabled/grayed out
+            ageInput.style.backgroundColor = 'rgba(255,255,255,0.1)'; 
+            ageInput.style.cursor = 'not-allowed';
+
+            // B. Set MAX date to exactly 12 years ago (No one younger than 12 can sign up)
+            const today = new Date();
+            const maxDate = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate());
+            
+            // Format to YYYY-MM-DD for the HTML attribute
+            const yyyy = maxDate.getFullYear();
+            const mm = String(maxDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(maxDate.getDate()).padStart(2, '0');
+            
+            birthdayInput.max = `${yyyy}-${mm}-${dd}`;
+
+            // C. Auto-Calculate Age when Birthday changes
+            birthdayInput.addEventListener('change', function() {
+                const birthDate = new Date(this.value);
+                const today = new Date();
+                
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                
+                // Adjust if birthday hasn't happened yet this year
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                
+                ageInput.value = age;
+                
+                // Remove error style if it exists
+                ageInput.classList.remove('input-error');
+            });
+        }
+    }
+
 
     // =========================================
-    // 2. REAL-TIME INPUT VALIDATION
+    // 3. REAL-TIME INPUT VALIDATION
     // =========================================
     
     const clearInputError = (e) => e.target.classList.remove('input-error');
@@ -104,11 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (signupForm) {
         const nameInput = document.getElementById('name');
         const usernameInput = document.getElementById('username');
-        const ageInput = document.getElementById('age');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
 
-        // Name: Max 34 (Kept original)
+        // Name: Max 34
         if (nameInput) {
             nameInput.addEventListener('input', (e) => {
                 e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, '');
@@ -117,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Username: Max 25 (UPDATED)
+        // Username: Max 25
         if (usernameInput) {
             usernameInput.addEventListener('input', (e) => {
                 if (e.target.value.length > 25) e.target.value = e.target.value.slice(0, 25);
@@ -125,16 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Age: Max 10
-        if (ageInput) {
-            ageInput.addEventListener('input', (e) => {
-                e.target.value = e.target.value.replace(/[^0-9]/g, '');
-                if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10);
-                clearInputError(e);
-            });
-        }
-        
-        // Email: Max 34 (Kept original)
+        // Email: Max 34
         if (emailInput) {
             emailInput.addEventListener('input', (e) => {
                 if (e.target.value.length > 34) e.target.value = e.target.value.slice(0, 34);
@@ -142,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        // Password: Max 25 (UPDATED)
+        // Password: Max 25
         if (passwordInput) {
             passwordInput.addEventListener('input', (e) => {
                 if (e.target.value.length > 25) e.target.value = e.target.value.slice(0, 25);
@@ -156,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const loginUsername = loginForm.querySelector('#username');
         const loginPassword = loginForm.querySelector('#password');
 
-        // Username: Max 25 (UPDATED)
+        // Username: Max 25
         if (loginUsername) {
             loginUsername.addEventListener('input', (e) => {
                 if (e.target.value.length > 25) e.target.value = e.target.value.slice(0, 25);
@@ -164,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Password: Max 25 (UPDATED)
+        // Password: Max 25
         if (loginPassword) {
             loginPassword.addEventListener('input', (e) => {
                 if (e.target.value.length > 25) e.target.value = e.target.value.slice(0, 25);
@@ -175,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // =========================================
-    // 3. SIGNUP FORM SUBMISSION
+    // 4. SIGNUP FORM SUBMISSION
     // =========================================
     if (signupForm) {
         signupForm.addEventListener('submit', async (e) => {
@@ -186,9 +222,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = Object.fromEntries(formData.entries());
             
             // --- Validation ---
+            
+            // Age/Birthday Check
+            // Since the calendar is restricted, this is just a backup check
             const ageVal = parseInt(data.age, 10);
             if (isNaN(ageVal) || ageVal < 12) {
-                showError('age', "You must be 12 years or older.");
+                showError('birthday', "You must be 12 years or older."); 
                 return;
             }
 
@@ -236,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // =========================================
-    // 4. LOGIN FORM SUBMISSION
+    // 5. LOGIN FORM SUBMISSION
     // =========================================
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
@@ -247,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = Object.fromEntries(formData.entries());
 
             // --- Login Validation ---
-            // Safety Check: Max 25
             if (data.username.length > 25) {
                 showError('username', "Username is too long (max 25).");
                 return;
@@ -288,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================
-    // 5. CHAT LOGIC
+    // 6. CHAT LOGIC
     // =========================================
     async function loadChatHistory() {
         if (!chatLog) return; 
