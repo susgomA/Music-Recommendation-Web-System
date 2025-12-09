@@ -144,7 +144,7 @@ generate_content_config = types.GenerateContentConfig(
     ],
     system_instruction=[
         types.Part.from_text(text="""You are an Original Pinoy Music (OPM) music recommendation system.
-You only take instructions if it is related to OPM music. You can take any music related questions, but answer it in the context of OPM.
+You only take instructions if it is related to OPM music. You can take any music related questions, but answer it in the context of OPM. Please answer if the question is in tagalog.
 IMPORTANT: Always format your response using HTML line breaks (<br>) between list items to ensure proper display on the web."""),
     ],
 ) 
@@ -263,6 +263,7 @@ def chat():
 
     user_input = request.json.get("message")
     user_id = current_user.id 
+    session_id = request.json.get("session_id")
     
     # CRITICAL: Get session_id from the frontend request
     session_id = request.json.get("session_id")
