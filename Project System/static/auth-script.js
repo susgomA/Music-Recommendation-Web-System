@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const signupForm = document.getElementById('signup-form');
     const loginForm = document.getElementById('login-form');
     
-    // References for the Chat Page (may be null on signup/login pages)
+    // Chat Page References
     const chatLog = document.getElementById('chat-log');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
@@ -13,37 +13,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendButton = chatForm ? chatForm.querySelector('button[type="submit"]') : null;
     
     // =========================================
-    // HELPER FUNCTION: Display Message (Must be defined globally in this scope)
+    // 0. TOAST NOTIFICATION SYSTEM
     // =========================================
+    
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        document.body.appendChild(toastContainer);
+    }
 
-    /**
-     * Creates and appends a message bubble to the chat log.
-     * @param {string} message - The text to display
-     * @param {'user' | 'bot'} sender - The sender of the message
-     */
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+
+        toastContainer.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 3500);
+    }
+
+    // =========================================
+    // HELPER FUNCTIONS
+    // =========================================
+    
     function displayMessage(message, sender) {
         if (!chatLog) return; 
-        
         const messageElement = document.createElement('div');
         messageElement.classList.add('chat-bubble');
-        
         const senderClass = sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-bot';
         messageElement.classList.add(senderClass);
-        
-        if (sender === 'user') {
-            messageElement.textContent = message;
-        } else {
-            messageElement.innerHTML = message;
-        }
-        
+        messageElement.innerHTML = sender === 'user' ? message : message;
         chatLog.appendChild(messageElement);
         chatLog.scrollTop = chatLog.scrollHeight; 
     }
 
-    /**
-     * Toggles the input and button state to show loading/waiting.
-     * @param {boolean} disabled
-     */
     function toggleInputState(disabled) {
         if (!chatInput || !sendButton) return;
         chatInput.disabled = disabled;
@@ -51,41 +57,150 @@ document.addEventListener('DOMContentLoaded', () => {
         sendButton.textContent = disabled ? 'Thinking...' : 'Send';
     }
 
+    function showError(inputId, message) {
+        const inputElement = document.getElementById(inputId);
+        if (inputElement) {
+            inputElement.classList.add('input-error');
+            inputElement.focus();
+        }
+        showToast(message, 'error');
+    }
+
+    function clearErrors(form) {
+        if (!form) return;
+        const inputs = form.querySelectorAll('input');
+        inputs.forEach(input => input.classList.remove('input-error'));
+    }
+
 
     // =========================================
-    // 1. SHOW/HIDE PASSWORD LOGIC (Applies to ALL forms)
+    // 1. SHOW/HIDE PASSWORD LOGIC
     // =========================================
     togglePasswordBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             const wrapper = btn.closest('.password-wrapper');
-            const inputField = wrapper ? wrapper.querySelector('input[type="password"], input[type="text"]') : null;
-            
-            if (!inputField) return;
-
-            if (inputField.type === 'password') {
-                inputField.type = 'text';
-                btn.textContent = 'Hide';
-            } else {
-                inputField.type = 'password';
-                btn.textContent = 'Show';
+            const inputField = wrapper ? wrapper.querySelector('input') : null;
+            if (inputField) {
+                if (inputField.type === 'password') {
+                    inputField.type = 'text';
+                    btn.textContent = 'Hide';
+                } else {
+                    inputField.type = 'password';
+                    btn.textContent = 'Show';
+                }
             }
         });
     });
 
 
     // =========================================
-    // 2. SIGNUP FORM SUBMISSION LOGIC
+    // 2. REAL-TIME INPUT VALIDATION
+    // =========================================
+    
+    const clearInputError = (e) => e.target.classList.remove('input-error');
+
+    // --- Signup Form Inputs ---
+    if (signupForm) {
+        const nameInput = document.getElementById('name');
+        const usernameInput = document.getElementById('username');
+        const ageInput = document.getElementById('age');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        // Name: Max 34 (Kept original)
+        if (nameInput) {
+            nameInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+                if (e.target.value.length > 34) e.target.value = e.target.value.slice(0, 34);
+                clearInputError(e);
+            });
+        }
+        
+        // Username: Max 25 (UPDATED)
+        if (usernameInput) {
+            usernameInput.addEventListener('input', (e) => {
+                if (e.target.value.length > 25) e.target.value = e.target.value.slice(0, 25);
+                clearInputError(e);
+            });
+        }
+        
+        // Age: Max 10
+        if (ageInput) {
+            ageInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10);
+                clearInputError(e);
+            });
+        }
+        
+        // Email: Max 34 (Kept original)
+        if (emailInput) {
+            emailInput.addEventListener('input', (e) => {
+                if (e.target.value.length > 34) e.target.value = e.target.value.slice(0, 34);
+                clearInputError(e);
+            });
+        }
+        
+        // Password: Max 25 (UPDATED)
+        if (passwordInput) {
+            passwordInput.addEventListener('input', (e) => {
+                if (e.target.value.length > 25) e.target.value = e.target.value.slice(0, 25);
+                clearInputError(e);
+            });
+        }
+    }
+
+    // --- Login Form Inputs ---
+    if (loginForm) {
+        const loginUsername = loginForm.querySelector('#username');
+        const loginPassword = loginForm.querySelector('#password');
+
+        // Username: Max 25 (UPDATED)
+        if (loginUsername) {
+            loginUsername.addEventListener('input', (e) => {
+                if (e.target.value.length > 25) e.target.value = e.target.value.slice(0, 25);
+                clearInputError(e);
+            });
+        }
+
+        // Password: Max 25 (UPDATED)
+        if (loginPassword) {
+            loginPassword.addEventListener('input', (e) => {
+                if (e.target.value.length > 25) e.target.value = e.target.value.slice(0, 25);
+                clearInputError(e);
+            });
+        }
+    }
+
+
+    // =========================================
+    // 3. SIGNUP FORM SUBMISSION
     // =========================================
     if (signupForm) {
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            clearErrors(signupForm);
 
             const formData = new FormData(signupForm);
             const data = Object.fromEntries(formData.entries());
             
-            if (data.password.length < 6) {
-                alert("Password must be at least 6 characters long.");
+            // --- Validation ---
+            const ageVal = parseInt(data.age, 10);
+            if (isNaN(ageVal) || ageVal < 12) {
+                showError('age', "You must be 12 years or older.");
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(data.email)) {
+                showError('email', "Invalid email (must contain '@' and domain).");
+                return;
+            }
+
+            // Min Length Check (Max is handled by input slice)
+            if (data.password.length < 8) {
+                showError('password', "Password must be at least 8 characters.");
                 return;
             }
 
@@ -99,29 +214,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert('Account created successfully! Please log in.');
-                    window.location.href = result.redirect_url || "/login";
+                    showToast('Account created! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = result.redirect_url || "/login";
+                    }, 1500);
                 } else {
-                    alert('Signup Failed: ' + (result.error || 'Check the server logs.'));
+                    if (result.error && result.error.toLowerCase().includes('username')) {
+                         showError('username', result.error);
+                    } else if (result.error && result.error.toLowerCase().includes('email')) {
+                         showError('email', result.error);
+                    } else {
+                         showToast(result.error || 'Signup Failed', 'error');
+                    }
                 }
-
             } catch (error) {
-                console.error('Network or Server Error:', error);
-                alert('An unexpected error occurred during communication. Please try again.');
+                console.error('Network error:', error);
+                showToast('Server connection failed.', 'error');
             }
         });
     }
 
 
     // =========================================
-    // 3. LOGIN FORM SUBMISSION LOGIC
+    // 4. LOGIN FORM SUBMISSION
     // =========================================
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            clearErrors(loginForm);
 
             const formData = new FormData(loginForm);
             const data = Object.fromEntries(formData.entries());
+
+            // --- Login Validation ---
+            // Safety Check: Max 25
+            if (data.username.length > 25) {
+                showError('username', "Username is too long (max 25).");
+                return;
+            }
+            if (data.password.length > 25) {
+                showError('password', "Password is too long (max 25).");
+                return;
+            }
 
             try {
                 const response = await fetch('/login', {
@@ -133,126 +267,79 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    alert(result.message);
-                    window.location.href = result.redirect_url || "/";
+                    showToast('Login successful! Welcome back.', 'success');
+                    setTimeout(() => {
+                        window.location.href = result.redirect_url || "/";
+                    }, 1000);
                 } else {
-                    alert(result.error || 'Login failed. Check credentials.');
+                    const userField = loginForm.querySelector('#username');
+                    const passField = loginForm.querySelector('#password');
+                    if(userField) userField.classList.add('input-error');
+                    if(passField) passField.classList.add('input-error');
+                    
+                    showToast(result.error || 'Invalid credentials', 'error');
                 }
 
             } catch (error) {
-                console.error('Network or Server Error:', error);
-                alert('An unexpected error occurred. Could not connect to the server.');
+                console.error('Network error:', error);
+                showToast('Server connection failed.', 'error');
             }
         });
     }
 
-    
     // =========================================
-    // 4. PERSISTENT CHAT HISTORY LOADING (New)
+    // 5. CHAT LOGIC
     // =========================================
-    
-    // This function only runs if chatLog exists (i.e., we are on index.html)
     async function loadChatHistory() {
         if (!chatLog) return; 
-
         try {
             const response = await fetch('/get_history');
-            
-            if (response.status === 401) {
-                console.log("User not authenticated for history retrieval.");
-                return;
-            }
-            
-            if (!response.ok) {
-                throw new Error(`Failed to load history: HTTP Status ${response.status}`);
-            }
-
+            if (response.status === 401) return;
+            if (!response.ok) throw new Error('History failed');
             const data = await response.json();
-            
-            // Clear the default welcome message before rendering history
             chatLog.innerHTML = '';
-            
-            // Render the history messages
             data.history.forEach(msg => {
-                const senderClass = msg.sender === 'user' ? 'user' : 'bot';
-                displayMessage(msg.content, senderClass);
+                displayMessage(msg.content, msg.sender === 'user' ? 'user' : 'bot');
             });
-            
-            // If history is empty, show the welcome message
-            if (data.history.length === 0) {
-                 displayMessage('Welcome to A3 Music! What OPM songs are you in the mood for?', 'bot');
-            }
-            
+            if (data.history.length === 0) displayMessage('Welcome to A3 Music!', 'bot');
         } catch (error) {
-            console.error('Error loading chat history:', error);
-            displayMessage('Error: Could not load past messages.', 'bot');
+            console.error(error);
         }
     }
     
-    
-    // =========================================
-    // 5. CHAT SUBMISSION LOGIC (From index.html)
-    // =========================================
-    
-    // This logic only runs if the chat form exists (i.e., we are on index.html)
     if (chatForm) {
-        
-        // --- Setup: Load history when page loads ---
         loadChatHistory();
-        
-        // --- Submission Handler ---
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const message = chatInput.value.trim();
             if (message === "") return;
-            
-            // 1. Display user message immediately
             displayMessage(message, 'user');
             chatInput.value = '';
             toggleInputState(true);
 
             try {
-                // 2. Send message to Flask backend /chat
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: message })
                 });
-
                 const data = await response.json();
-                
-                if (!response.ok) {
-                     // This catches the 429 quota error or 500 server error
-                     throw new Error(data.response || `HTTP error! Status: ${response.status}`);
-                }
-
-                // 3. Display AI response
+                if (!response.ok) throw new Error(data.response);
                 displayMessage(data.response, 'bot');
-
             } catch (error) {
-                console.error('Chat API error:', error);
-                // Display the error message provided by the backend, or a generic one
-                displayMessage(error.message || "🤖 Error: Could not connect to the recommender service.", 'bot');
+                displayMessage("🤖 Error connecting to service.", 'bot');
             } finally {
                 toggleInputState(false);
             }
         });
         
-        // --- Preset Buttons Handler (Add this back from earlier steps) ---
         if (presetButtonsContainer) {
             presetButtonsContainer.addEventListener('click', function(e) {
                 if (e.target.classList.contains('preset-btn')) {
                     const presetText = e.target.textContent.trim();
                     const message = `Recommend OPM music for a ${presetText} mood/playlist.`; 
-                    // This uses the chat submission logic defined above
-                    // We call the inner function of the event listener with the message
-                    chatForm.dispatchEvent(new Event('submit')); 
-                    
-                    // Note: Since we are using an async submission, it's safer to just call 
-                    // sendMessage directly if it was defined, but we'll adapt to this structure.
-                    // For now, let's just make sure the input is set correctly for submission:
                     chatInput.value = message;
-                    chatForm.dispatchEvent(new Event('submit')); // Trigger form submission
+                    chatForm.dispatchEvent(new Event('submit')); 
                 }
             });
         }

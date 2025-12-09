@@ -232,3 +232,81 @@ footer {
     font-size: 0.875rem; 
     margin: 0;
 }
+
+/* --- Add this to the very bottom of auth-styles.css --- */
+
+/* 1. Red Border for invalid inputs */
+.input-error {
+    border-color: #ef4444 !important; /* Red */
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important; /* Red Glow */
+    animation: shake 0.3s ease-in-out;
+}
+
+/* 2. Red Error Text Message */
+.error-message-text {
+    color: #ef4444;
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+    display: block;
+    font-weight: 700;
+    text-align: left;
+}
+
+/* Shake Animation */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* --- TOAST NOTIFICATION STYLES (The "Better" Pop-up) --- */
+
+/* Container for the notifications */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* The Notification Box */
+.toast {
+    min-width: 250px;
+    max-width: 350px;
+    background-color: #1e293b; /* Dark background */
+    color: #fff;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    
+    /* Animation: Slide in, stay, then fade out */
+    animation: slideIn 0.3s ease-out forwards, fadeOut 0.5s ease-in forwards 3s;
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+/* Success Style (Green accent) */
+.toast.success {
+    border-left: 6px solid #10b981; /* Green */
+}
+
+/* Error Style (Red accent) */
+.toast.error {
+    border-left: 6px solid #ef4444; /* Red */
+}
+
+/* Animations */
+@keyframes slideIn {
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateX(100%); }
+}
