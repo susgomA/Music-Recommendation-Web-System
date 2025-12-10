@@ -325,5 +325,8 @@ def chat():
         return jsonify({"response": f"An API error occurred: {error_str}"}), 500
 
 
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    with app.app_context():
+        db.create_all() 
+    
