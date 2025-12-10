@@ -1,7 +1,71 @@
+/* --- PRELOADER SCRIPT --- */
+window.addEventListener("load", function() {
+    const loader = document.getElementById("preloader");
+    setTimeout(function() {
+        loader.classList.add("loader-hidden");
+        loader.addEventListener("transitionend", function() {
+            if (loader.parentNode) loader.parentNode.removeChild(loader);
+        });
+    }, 1000);
+});
+
+/* --- CUSTOM MODAL LOGIC (NEW) --- */
+const modal = {
+    overlay: document.getElementById('custom-modal'),
+    title: document.getElementById('modal-title'),
+    message: document.getElementById('modal-message'),
+    cancelBtn: document.getElementById('modal-cancel'),
+    confirmBtn: document.getElementById('modal-confirm'),
+    pendingCallback: null
+};
+
+// Initialize Modal Listeners
+if (modal.overlay) {
+    modal.cancelBtn.addEventListener('click', hideModal);
+    modal.confirmBtn.addEventListener('click', () => {
+        if (modal.pendingCallback) modal.pendingCallback();
+        hideModal();
+    });
+    modal.overlay.addEventListener('click', (e) => {
+        if (e.target === modal.overlay) hideModal();
+    });
+}
+
+function showModal(title, text, type, callback) {
+    modal.title.textContent = title;
+    modal.message.textContent = text;
+    modal.pendingCallback = callback;
+
+    modal.confirmBtn.className = 'modal-btn confirm';
+    modal.cancelBtn.style.display = 'block'; 
+
+    if (type === 'delete') {
+        modal.confirmBtn.textContent = 'Delete';
+        modal.confirmBtn.style.backgroundColor = '#ef4444'; 
+    } else if (type === 'info') {
+        modal.confirmBtn.textContent = 'OK';
+        modal.confirmBtn.className = 'modal-btn primary'; 
+        modal.cancelBtn.style.display = 'none'; 
+    }
+
+    modal.overlay.classList.remove('hidden');
+    setTimeout(() => {
+        modal.overlay.classList.add('show');
+    }, 10);
+}
+
+function hideModal() {
+    modal.overlay.classList.remove('show');
+    setTimeout(() => {
+        modal.overlay.classList.add('hidden');
+        modal.pendingCallback = null;
+    }, 300); 
+}
+
+/* --- EXISTING SCRIPT BELOW... --- */
 document.addEventListener('DOMContentLoaded', async () => {
     
     // --- Global DOM References ---
-    const togglePasswordBtns = document.querySelectorAll('.toggle-password-btn');
     const chatLog = document.getElementById('chat-log');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
@@ -11,41 +75,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const newChatBtn = document.getElementById('new-chat-btn');
     const historyList = document.getElementById('history-list');
 
-    // --- State Management ---
     let currentSessionId = sessionStorage.getItem('current_chat_session'); 
     let isChatActive = false; 
 
-    // =========================================
-    // 0. IMMEDIATE LAYOUT FIX (PREVENT FLASH)
-    // =========================================
-    // If we have a stored session, SNAP the UI to "Expanded" immediately
-    // so the user doesn't see the "New Chat" screen growing.
+    // Prevent Flash
     if (currentSessionId && chatLog && presetButtonsContainer) {
-        // 1. Disable animations instantly
         chatLog.style.transition = 'none';
         presetButtonsContainer.style.transition = 'none';
-        
-        // 2. Set to "Ongoing Chat" view
         chatLog.classList.add('expanded');
         presetButtonsContainer.classList.add('hidden');
         isChatActive = true;
     }
 
-    // =========================================
-    // 1. HELPER FUNCTIONS
-    // =========================================
-
+    // --- Helper Functions ---
     function displayMessage(message, sender) {
         if (!chatLog) return; 
-        
         const messageElement = document.createElement('div');
         messageElement.classList.add('chat-bubble');
-        
         const senderClass = sender === 'user' ? 'chat-bubble-user' : 'chat-bubble-bot';
         messageElement.classList.add(senderClass);
-        
         messageElement.innerHTML = message; 
-        
         chatLog.appendChild(messageElement);
         scrollToBottom(); 
     }
@@ -64,21 +113,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(chatLog) chatLog.scrollTop = chatLog.scrollHeight;
     }
     
-    // Handles the transition from "New Chat" to "Active Chat"
     function startChatSession(animated = true) {
         if (!isChatActive && presetButtonsContainer && chatLog) {
             isChatActive = true;
-            
             if (!animated) {
                 chatLog.style.transition = 'none';
                 presetButtonsContainer.style.transition = 'none';
             }
-
             presetButtonsContainer.classList.add('hidden');
             chatLog.classList.add('expanded');
-
             if (!animated) {
-                // Restore animations after a tiny delay
                 setTimeout(() => {
                     chatLog.style.transition = '';
                     presetButtonsContainer.style.transition = '';
@@ -87,12 +131,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // =========================================
-    // 2. DATABASE / PERSISTENCE FUNCTIONS
-    // =========================================
-    
+    // --- Database / Persistence ---
     async function deleteSession(sessionId) {
-        if(confirm("Delete this chat?")) {
+        showModal('Delete Chat?', 'Are you sure you want to remove this history?', 'delete', async () => {
             try {
                 const response = await fetch(`/delete_chat/${sessionId}`, { method: 'POST' });
                 if (response.ok) {
@@ -102,26 +143,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                         renderSidebarHistory(); 
                     }
                 } else {
-                    alert('Failed to delete chat on the server.');
+                    showModal('Error', 'Failed to delete chat on the server.', 'info');
                 }
             } catch (error) {
                 console.error('Error deleting chat:', error);
             }
-        }
+        });
     }
     
     async function loadSession(sessionId) {
         if (!chatLog) return false; 
-        
         try {
             const response = await fetch(`/load_session/${sessionId}`);
             if (!response.ok) return false;
-
             const data = await response.json();
-
-            // CHECK: Do we have history?
             if (data.history && data.history.length > 0) {
-                // Yes: Clear log, show messages
                 chatLog.innerHTML = ''; 
                 data.history.forEach(msg => {
                     const senderClass = msg.sender === 'user' ? 'user' : 'bot';
@@ -129,25 +165,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 return true; 
             } 
-            
-            // If history is empty, treat as invalid/new
             return false;
-            
         } catch (error) {
             console.error('Error loading session:', error);
             return false; 
         }
     }
 
-
     async function renderSidebarHistory() {
         if (!historyList) return;
-        
         try {
             const response = await fetch('/get_chat_list');
             if (response.status === 401) return; 
             if (!response.ok) throw new Error(`Failed to load chat list: ${response.status}`);
-            
             const data = await response.json();
             historyList.innerHTML = '';
             
@@ -167,7 +197,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 itemContainer.addEventListener('click', () => {
                     if (session.id !== currentSessionId) {
-                        // Force a reload to switch chats cleanly
                         sessionStorage.setItem('current_chat_session', session.id);
                         window.location.reload();
                     }
@@ -182,7 +211,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 itemContainer.appendChild(deleteBtn);
                 historyList.appendChild(itemContainer);
             });
-
         } catch (error) {
             console.error('Error fetching chat list:', error);
         }
@@ -190,79 +218,66 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function startNewChat() {
         if (!chatLog) return; 
-
         try {
             const response = await fetch('/new_chat', { method: 'POST' });
             
             if (response.status === 401) {
-                 alert("You must be logged in to start a new chat.");
-                 window.location.href = '/login'; 
+                 showModal('Login Required', 'You must be logged in to start a new chat.', 'info', () => {
+                     window.location.href = '/login';
+                 });
                  return;
             }
 
             const data = await response.json();
-            
             currentSessionId = data.session_id; 
             sessionStorage.setItem('current_chat_session', currentSessionId);
-            
-            // Reset UI for New Chat (Collapsed state)
             chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Welcome to A3 Music!</div>';
             isChatActive = false;
-            
-            // Show Presets / Collapse Chat
             if (presetButtonsContainer) {
                 presetButtonsContainer.classList.remove('hidden');
-                presetButtonsContainer.style.transition = ''; // Ensure animation is on
+                presetButtonsContainer.style.transition = ''; 
             }
             if (chatLog) {
                 chatLog.classList.remove('expanded'); 
-                chatLog.style.transition = ''; // Ensure animation is on
+                chatLog.style.transition = ''; 
             }
-            
             renderSidebarHistory(); 
             if(sidebar) sidebar.classList.remove('open');
-            
         } catch (error) {
             console.error('Error starting new chat:', error);
-            alert('Could not start new chat session due to a server error.');
+            showModal('Error', 'Could not start new chat session.', 'info');
         }
     }
 
-    /** Core Chat Logic */
     async function sendMessage(message) {
         if (message.trim() === "") return;
-
-        // This triggers the SMOOTH expansion animation
         startChatSession(true); 
-
         displayMessage(message.replace(/\n/g, '<br>'), 'user'); 
-        
         if(chatInput) { chatInput.value = ''; chatInput.style.height = 'auto'; }
-        
         toggleInputState(true);
 
         try {
             const response = await fetch('/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    message: message,
-                    session_id: currentSessionId 
-                })
+                body: JSON.stringify({ message: message, session_id: currentSessionId })
             });
             
             const data = await response.json();
-
             if (!response.ok) throw new Error(data.response || `HTTP error! status: ${response.status}`);
 
+            // Update Session ID if new
             if (data.session_id && data.session_id !== currentSessionId) {
                  currentSessionId = data.session_id;
                  sessionStorage.setItem('current_chat_session', currentSessionId);
-                 renderSidebarHistory(); 
             }
+            
+            // --- FIX: ALWAYS UPDATE HISTORY AFTER MESSAGE ---
+            // This ensures the title updates from "New Chat" to the specific topic immediately
+            renderSidebarHistory(); 
+            // ------------------------------------------------
 
             displayMessage(data.response, 'bot');
-
         } catch (error) {
             console.error('Fetch error:', error);
             displayMessage(error.message || "🤖 Error: Could not connect to the recommender service.", 'bot');
@@ -271,41 +286,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // =========================================
-    // 3. FINAL EXECUTION & INITIALIZATION
-    // =========================================
-    
     async function initializeChatState() {
         if (!chatForm) return; 
-
-        // 1. Attempt to load the stored session
         let sessionLoaded = false;
         if (currentSessionId) {
             sessionLoaded = await loadSession(currentSessionId);
         }
-
-        // 2. If load FAILED or was EMPTY, revert the "Instant Snap" we did at the top
         if (!sessionLoaded) {
             currentSessionId = null; 
             sessionStorage.removeItem('current_chat_session');
-            
-            // Snap back to New Chat view
             chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Welcome to A3 Music!</div>';
             if (presetButtonsContainer) presetButtonsContainer.classList.remove('hidden');
             if (chatLog) chatLog.classList.remove('expanded');
             isChatActive = false;
         }
-
-        // 3. Restore Transitions (Smooth animations enabled for future actions)
-        // We use a small timeout to ensure the browser has painted the initial state
         setTimeout(() => {
             if(chatLog) chatLog.style.transition = '';
             if(presetButtonsContainer) presetButtonsContainer.style.transition = '';
         }, 100);
-        
         await renderSidebarHistory(); 
 
-        // --- Event Listeners ---
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault(); 
@@ -357,7 +357,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 /* =========================================
    DROPDOWN LOGIC
    ========================================= */
-
 function toggleDropdown() {
     const dropdown = document.getElementById("userDropdown");
     if (dropdown) {

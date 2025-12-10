@@ -540,3 +540,135 @@ input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
+
+/* =========================================
+   MOBILE RESPONSIVENESS
+   ========================================= */
+
+@media (max-width: 768px) {
+    
+    /* 1. Sidebar Fixes */
+    :root {
+        --sidebar-width: 85%; /* Wider sidebar for mobile */
+    }
+
+    #sidebar {
+        /* FIX: Hide the sidebar completely based on its new percentage width */
+        left: -85%; 
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5); /* Add shadow so it pops when open */
+    }
+
+    /* 2. Adjust Main Title */
+    main h1 {
+        font-size: 2.5rem;
+        text-align: center;
+        margin-top: 0;
+    }
+
+    /* 3. Input Form Width */
+    #chat-form {
+        width: 95%; 
+        max-width: 100%;
+        gap: 0.5rem;
+    }
+    
+    /* 4. Adjust Chat Input Text Size */
+    #chat-input {
+        font-size: 1rem; /* Prevent zooming on iOS */
+        padding: 0.8rem 1.2rem;
+    }
+
+    /* 5. Preset Buttons Grid */
+    #preset-buttons {
+        gap: 0.5rem;
+    }
+    .preset-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        flex: 1 1 40%; /* Make buttons span 2 columns */
+        text-align: center;
+    }
+
+    /* 6. Main Content Spacing */
+    main {
+        padding-top: 5rem;
+        padding-bottom: 8rem; /* Less padding so keyboard doesn't hide messages */
+    }
+    
+    /* 7. Chat Log Height */
+    /* Give it a flexible height so it fits on small screens */
+    #chat-log {
+        height: 50vh; 
+    }
+    
+    #chat-log.expanded {
+        height: calc(100vh - 160px); 
+    }
+}
+
+/* =========================================
+   LOADING SCREEN STYLES
+   ========================================= */
+   #preloader {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: var(--bg-color); 
+    z-index: 99999; 
+    display: flex; justify-content: center; align-items: center;
+    transition: opacity 0.5s ease-out, visibility 0.5s;
+}
+.loader-content { text-align: center; color: var(--text-color); }
+.loader-logo { font-size: 4rem; font-weight: bold; margin-bottom: 20px; color: var(--text-color); animation: pulse 1.5s infinite; }
+.loader-spinner {
+    width: 50px; height: 50px; border: 5px solid rgba(255, 255, 255, 0.1);
+    border-top: 5px solid var(--accent-color); border-radius: 50%; margin: 0 auto 15px auto; animation: spin 1s linear infinite;
+}
+.loader-hidden { opacity: 0; visibility: hidden; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes pulse { 0% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0.7; transform: scale(1); } }
+
+/* =========================================
+   CUSTOM MODAL STYLES (NEW)
+   ========================================= */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6); /* Semi-transparent black */
+    backdrop-filter: blur(4px); /* Blur background behind modal */
+    display: flex; justify-content: center; align-items: center;
+    z-index: 100000; /* Highest priority */
+    opacity: 0; visibility: hidden;
+    transition: all 0.3s ease;
+}
+.modal-overlay.show { opacity: 1; visibility: visible; }
+
+.modal-container {
+    background-color: #1e293b; /* Matches Nav Color */
+    padding: 2rem; border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center; width: 90%; max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.modal-overlay.show .modal-container { transform: scale(1); }
+
+.modal-container h3 {
+    margin-top: 0; color: #fff; font-size: 1.5rem; margin-bottom: 0.5rem;
+}
+.modal-container p { color: var(--label-color); margin-bottom: 1.5rem; font-size: 1.1rem; }
+
+.modal-buttons { display: flex; gap: 1rem; justify-content: center; }
+.modal-btn {
+    padding: 0.75rem 1.5rem; border: none; border-radius: 8px;
+    font-family: inherit; font-weight: bold; font-size: 1rem; cursor: pointer;
+    transition: filter 0.2s;
+}
+.modal-btn:hover { filter: brightness(1.2); }
+
+.modal-btn.cancel {
+    background-color: transparent; border: 1px solid var(--label-color); color: var(--label-color);
+}
+.modal-btn.confirm {
+    background-color: #ef4444; /* Red for Delete */
+    color: white;
+}
+/* If using for Login alert, we might want a blue confirm button, handled via JS classes */
+.modal-btn.primary { background-color: var(--accent-color); color: #0f1c3f; }

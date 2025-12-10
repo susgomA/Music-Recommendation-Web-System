@@ -5,9 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A3 Music - Music Recommendation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    </head>
+</head>
 <body class="antialiased">
 
+    <div id="preloader">
+        <div class="loader-content">
+            <h1 class="loader-logo">A3 Music</h1>
+            <div class="loader-spinner"></div>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <h3 id="modal-title">Notification</h3>
+            <p id="modal-message">Message goes here...</p>
+            <div class="modal-buttons">
+                <button id="modal-cancel" class="modal-btn cancel">Cancel</button>
+                <button id="modal-confirm" class="modal-btn confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
     <nav>
         <div class="container">
             <div class="nav-left">
