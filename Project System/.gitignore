@@ -1,0 +1,13 @@
+# .gitignore file
+
+# Environment Variables (Secrets)
+.env
+
+# Python Virtual Environment
+venv/
+.venv/
+
+# Build and Cache Files
+__pycache__/
+*.pyc
+instance/
