@@ -85,18 +85,14 @@ nav .container {
     padding-left: 1rem;
     padding-right: 1rem;
     width: 100%;
-    /* Added to help position the menu button relative to this if needed, 
-       but we will move the button to the absolute edge */
     position: relative;
 }
 
-/* --- UPDATED: Menu Button (Top Left Edge) --- */
+/* Menu Button */
 #menu-btn {
-    /* Fixed position to stay at the very top-left edge regardless of container padding */
     position: fixed; 
-    top: 1rem; /* Align with navbar padding */
+    top: 1rem; 
     left: 1rem;
-    
     background: transparent;
     border: none;
     color: var(--text-color);
@@ -106,7 +102,7 @@ nav .container {
     align-items: center;
     justify-content: center;
     transition: color 0.2s;
-    z-index: 70; /* Above navbar content */
+    z-index: 70; 
 }
 #menu-btn:hover {
     color: var(--accent-color);
@@ -117,7 +113,6 @@ nav .container {
 .nav-left {
     display: flex;
     align-items: center;
-    /* Removed gap since we might want tighter control */
 }
 
 nav .logo-link {
@@ -130,22 +125,106 @@ nav .logo-link {
 nav .logo-link:hover {
     color: var(--accent-color); 
 }
+
+/* --- Auth Links Section --- */
 nav .auth-links {
     display: flex;
     align-items: center;
     font-size: 1.125rem; 
     line-height: 1.75rem;
-    gap: 1rem; 
 }
-nav .auth-links a {
+
+/* --- GUEST NAV STYLES --- */
+.guest-nav {
+    display: flex;
+    align-items: center;
+}
+
+.guest-nav .nav-link {
     color: var(--text-color);
     text-decoration: none;
+    transition: all 0.2s;
 }
-nav .auth-links a:hover {
-    color: var(--accent-color); 
+
+/* --- LOGGED IN DROPDOWN STYLES --- */
+.user-menu-container {
+    position: relative;
+    display: inline-block;
 }
-nav .auth-links .divider {
-    color: #64748b; 
+
+.user-menu-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 1.125rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+/* --- TERMINATOR SHAPE (For Login & User Button) --- */
+.terminator-btn {
+    border: 2px solid var(--accent-color); /* Blue border */
+    border-radius: 9999px; /* Fully rounded "Terminator" shape */
+    padding: 8px 20px; /* Padding for button look */
+    font-weight: 700; /* Bolder text */
+    text-decoration: none; /* Ensure no underline for links */
+    display: inline-block; 
+}
+
+.terminator-btn:hover {
+    background-color: rgba(56, 189, 248, 0.15); /* Subtle blue fill on hover */
+    color: #ffffff;
+}
+
+.arrow {
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+}
+
+/* The actual Dropdown Box */
+.dropdown-content {
+    display: none; /* Hidden by default */
+    position: absolute;
+    right: 0;
+    top: 130%; 
+    background-color: white;
+    min-width: 140px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.3);
+    border-radius: 12px;
+    z-index: 9999;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-in-out;
+    border: 1px solid var(--accent-color);
+}
+
+.dropdown-content.show {
+    display: block;
+}
+
+/* Dropdown Item (Logout) */
+.dropdown-item {
+    color: var(--bg-color); 
+    padding: 12px 20px;
+    text-decoration: none;
+    display: block;
+    font-size: 1rem;
+    text-align: left;
+    font-weight: 700;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(56, 189, 248, 0.15);
+    color: var(--accent-color);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* --- Sidebar Styling --- */
@@ -206,7 +285,6 @@ nav .auth-links .divider {
     gap: 0.5rem;
 }
 
-/* --- UPDATED: Individual History Item (Flex for X button) --- */
 .history-item {
     background: rgba(255,255,255,0.05);
     padding: 0.5rem 0.75rem;
@@ -215,8 +293,6 @@ nav .auth-links .divider {
     font-size: 1rem;
     color: var(--label-color);
     transition: background 0.2s;
-    
-    /* Flex layout to separate title and delete button */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -231,20 +307,18 @@ nav .auth-links .divider {
     border: 1px solid var(--accent-color);
 }
 
-/* Title Truncation */
 .history-title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    flex-grow: 1; /* Take up remaining space */
+    flex-grow: 1;
     margin-right: 0.5rem;
 }
 
-/* Delete Button (X) */
 .delete-chat-btn {
     background: transparent;
     border: none;
-    color: #64748b; /* Subtle color initially */
+    color: #64748b; 
     font-size: 1.2rem;
     line-height: 1;
     cursor: pointer;
@@ -254,7 +328,7 @@ nav .auth-links .divider {
     opacity: 0.6;
 }
 .delete-chat-btn:hover {
-    color: #ef4444; /* Red on hover */
+    color: #ef4444; 
     background-color: rgba(239, 68, 68, 0.1);
     opacity: 1;
 }
@@ -275,8 +349,6 @@ main {
     padding-top: 6rem; /* Space for Navbar */
     padding-bottom: 12rem; /* Space for Footer */
     height: 100vh;
-    /* Optional: shift content when sidebar opens */
-    /* transition: margin-left 0.3s ease-in-out; */
 }
 
 main h1 {
@@ -391,23 +463,19 @@ footer {
     border-color: var(--input-focus);
 }
 
-/* Send Button (White pill) */
 footer button[type="submit"] {
     background-color: var(--send-btn-bg);
     color: var(--send-btn-text);
     font-family: 'VT323', monospace; 
     font-size: 1.25rem; 
     font-weight: 700;
-    
     width: auto; 
     min-width: 100px; 
     height: 60px; 
     padding: 0 1.5rem; 
-    
     display: flex;
     align-items: center;
     justify-content: center;
-    
     border-radius: 1.5rem; 
     border: none;
     cursor: pointer;
@@ -419,7 +487,6 @@ footer button[type="submit"]:hover {
     transform: scale(1.05);
 }
 
-/* Copyright (Centered in footer) */
 .footer-bottom {
     width: 100%;
     text-align: center;

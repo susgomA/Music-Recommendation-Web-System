@@ -1,25 +1,35 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     
     // --- Global DOM References ---
     const togglePasswordBtns = document.querySelectorAll('.toggle-password-btn');
-    const signupForm = document.getElementById('signup-form');
-    const loginForm = document.getElementById('login-form');
-
-    // References for the Chat Page
     const chatLog = document.getElementById('chat-log');
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const presetButtonsContainer = document.getElementById('preset-buttons');
-    
-    // Sidebar References
     const menuBtn = document.getElementById('menu-btn');
     const sidebar = document.getElementById('sidebar');
     const newChatBtn = document.getElementById('new-chat-btn');
     const historyList = document.getElementById('history-list');
 
     // --- State Management ---
-    let currentSessionId = null; 
+    let currentSessionId = sessionStorage.getItem('current_chat_session'); 
     let isChatActive = false; 
+
+    // =========================================
+    // 0. IMMEDIATE LAYOUT FIX (PREVENT FLASH)
+    // =========================================
+    // If we have a stored session, SNAP the UI to "Expanded" immediately
+    // so the user doesn't see the "New Chat" screen growing.
+    if (currentSessionId && chatLog && presetButtonsContainer) {
+        // 1. Disable animations instantly
+        chatLog.style.transition = 'none';
+        presetButtonsContainer.style.transition = 'none';
+        
+        // 2. Set to "Ongoing Chat" view
+        chatLog.classList.add('expanded');
+        presetButtonsContainer.classList.add('hidden');
+        isChatActive = true;
+    }
 
     // =========================================
     // 1. HELPER FUNCTIONS
@@ -54,11 +64,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if(chatLog) chatLog.scrollTop = chatLog.scrollHeight;
     }
     
-    function startChatSession(immediate = false) {
+    // Handles the transition from "New Chat" to "Active Chat"
+    function startChatSession(animated = true) {
         if (!isChatActive && presetButtonsContainer && chatLog) {
             isChatActive = true;
+            
+            if (!animated) {
+                chatLog.style.transition = 'none';
+                presetButtonsContainer.style.transition = 'none';
+            }
+
             presetButtonsContainer.classList.add('hidden');
             chatLog.classList.add('expanded');
+
+            if (!animated) {
+                // Restore animations after a tiny delay
+                setTimeout(() => {
+                    chatLog.style.transition = '';
+                    presetButtonsContainer.style.transition = '';
+                }, 50);
+            }
         }
     }
 
@@ -90,30 +115,26 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const response = await fetch(`/load_session/${sessionId}`);
-            
-            if (!response.ok) {
-                 console.warn(`Attempted to load session ${sessionId} but received HTTP ${response.status}.`);
-                 return false;
-            }
+            if (!response.ok) return false;
 
             const data = await response.json();
 
-            chatLog.innerHTML = ''; 
+            // CHECK: Do we have history?
+            if (data.history && data.history.length > 0) {
+                // Yes: Clear log, show messages
+                chatLog.innerHTML = ''; 
+                data.history.forEach(msg => {
+                    const senderClass = msg.sender === 'user' ? 'user' : 'bot';
+                    displayMessage(msg.content, senderClass);
+                });
+                return true; 
+            } 
             
-            data.history.forEach(msg => {
-                const senderClass = msg.sender === 'user' ? 'user' : 'bot';
-                displayMessage(msg.content, senderClass);
-            });
-            
-            currentSessionId = sessionId;
-            sessionStorage.setItem('current_chat_session', sessionId);
-            startChatSession(true);
-            
-            return true; 
+            // If history is empty, treat as invalid/new
+            return false;
             
         } catch (error) {
             console.error('Error loading session:', error);
-            chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Error loading session history.</div>';
             return false; 
         }
     }
@@ -130,11 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             historyList.innerHTML = '';
             
-            if (!currentSessionId && data.sessions.length > 0) {
-                 const latestSessionId = data.sessions[0].id;
-                 await loadSession(latestSessionId); 
-            }
-
             data.sessions.forEach(session => {
                 const itemContainer = document.createElement('div');
                 itemContainer.className = 'history-item';
@@ -151,8 +167,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 itemContainer.addEventListener('click', () => {
                     if (session.id !== currentSessionId) {
-                        loadSession(session.id);
-                        renderSidebarHistory(); 
+                        // Force a reload to switch chats cleanly
+                        sessionStorage.setItem('current_chat_session', session.id);
+                        window.location.reload();
                     }
                 });
 
@@ -188,14 +205,21 @@ document.addEventListener('DOMContentLoaded', () => {
             currentSessionId = data.session_id; 
             sessionStorage.setItem('current_chat_session', currentSessionId);
             
+            // Reset UI for New Chat (Collapsed state)
             chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Welcome to A3 Music!</div>';
             isChatActive = false;
             
-            if (presetButtonsContainer) presetButtonsContainer.classList.remove('hidden');
-            if (chatLog) chatLog.classList.remove('expanded'); 
+            // Show Presets / Collapse Chat
+            if (presetButtonsContainer) {
+                presetButtonsContainer.classList.remove('hidden');
+                presetButtonsContainer.style.transition = ''; // Ensure animation is on
+            }
+            if (chatLog) {
+                chatLog.classList.remove('expanded'); 
+                chatLog.style.transition = ''; // Ensure animation is on
+            }
             
             renderSidebarHistory(); 
-            
             if(sidebar) sidebar.classList.remove('open');
             
         } catch (error) {
@@ -208,7 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function sendMessage(message) {
         if (message.trim() === "") return;
 
-        startChatSession(false); 
+        // This triggers the SMOOTH expansion animation
+        startChatSession(true); 
 
         displayMessage(message.replace(/\n/g, '<br>'), 'user'); 
         
@@ -228,9 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.response || `HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(data.response || `HTTP error! status: ${response.status}`);
 
             if (data.session_id && data.session_id !== currentSessionId) {
                  currentSessionId = data.session_id;
@@ -249,28 +272,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // =========================================
-    // 3. FINAL EXECUTION & EVENT LISTENERS
+    // 3. FINAL EXECUTION & INITIALIZATION
     // =========================================
     
     async function initializeChatState() {
         if (!chatForm) return; 
 
-        const storedSessionId = sessionStorage.getItem('current_chat_session');
-        if (storedSessionId) {
-            const loaded = await loadSession(storedSessionId);
-            if (!loaded) {
-                currentSessionId = null;
-                sessionStorage.removeItem('current_chat_session');
-            }
+        // 1. Attempt to load the stored session
+        let sessionLoaded = false;
+        if (currentSessionId) {
+            sessionLoaded = await loadSession(currentSessionId);
         }
+
+        // 2. If load FAILED or was EMPTY, revert the "Instant Snap" we did at the top
+        if (!sessionLoaded) {
+            currentSessionId = null; 
+            sessionStorage.removeItem('current_chat_session');
+            
+            // Snap back to New Chat view
+            chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Welcome to A3 Music!</div>';
+            if (presetButtonsContainer) presetButtonsContainer.classList.remove('hidden');
+            if (chatLog) chatLog.classList.remove('expanded');
+            isChatActive = false;
+        }
+
+        // 3. Restore Transitions (Smooth animations enabled for future actions)
+        // We use a small timeout to ensure the browser has painted the initial state
+        setTimeout(() => {
+            if(chatLog) chatLog.style.transition = '';
+            if(presetButtonsContainer) presetButtonsContainer.style.transition = '';
+        }, 100);
         
         await renderSidebarHistory(); 
 
-        if (!currentSessionId && chatLog) {
-            chatLog.innerHTML = '<div class="chat-bubble chat-bubble-bot">Welcome to A3 Music!</div>';
-        }
-
-        // --- Handle "Enter" Key ---
+        // --- Event Listeners ---
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault(); 
@@ -278,23 +313,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // --- Handle Submit Button ---
         chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const messageText = chatInput.value.trim();
-            if (messageText) {
-                sendMessage(messageText); 
-            }
+            if (messageText) sendMessage(messageText); 
         }); 
         
-        // --- Sidebar Toggle Logic ---
         if (menuBtn && sidebar) {
             menuBtn.addEventListener('click', (e) => {
                 e.stopPropagation(); 
                 sidebar.classList.toggle('open');
             });
 
-            // Close when clicking outside
             document.addEventListener('click', (e) => {
                 if (sidebar.classList.contains('open') && 
                     !sidebar.contains(e.target) && 
@@ -308,14 +338,11 @@ document.addEventListener('DOMContentLoaded', () => {
             newChatBtn.addEventListener('click', startNewChat);
         }
         
-        // --- PRESET BUTTONS (Auto-Send) ---
         if (presetButtonsContainer) {
             presetButtonsContainer.addEventListener('click', function(e) {
                 if (e.target.classList.contains('preset-btn')) {
                     const presetText = e.target.textContent.trim();
                     const message = `Recommend OPM music for a ${presetText} mood/playlist.`; 
-                    
-                    // Immediately send the message
                     sendMessage(message); 
                 }
             });
@@ -326,3 +353,26 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeChatState();
     }
 });
+
+/* =========================================
+   DROPDOWN LOGIC
+   ========================================= */
+
+function toggleDropdown() {
+    const dropdown = document.getElementById("userDropdown");
+    if (dropdown) {
+        dropdown.classList.toggle("show");
+    }
+}
+
+window.onclick = function(event) {
+    if (!event.target.matches('.user-menu-btn') && !event.target.matches('.user-menu-btn *')) {
+        const dropdowns = document.getElementsByClassName("dropdown-content");
+        for (let i = 0; i < dropdowns.length; i++) {
+            const openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+}
