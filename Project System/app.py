@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 # --- Database & Login Setup ---
 app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', 'your_super_secret_key_default') 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db' # Creates a local database file named site.db
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
