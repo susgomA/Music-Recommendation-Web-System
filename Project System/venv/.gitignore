@@ -1,0 +1,11 @@
+# .gitignore file (COMMIT THIS FILE)
+
+# Python artifacts
+__pycache__/
+*.pyc
+.venv/
+venv/
+instance/
+
+# Secret Files
+.env
