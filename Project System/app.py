@@ -57,6 +57,25 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+@login_manager.unauthorized_handler
+def unauthorized():
+    """
+    Handles unauthorized access, specifically for AJAX/API requests.
+    If the request is JSON, return a custom JSON error instead of redirecting.
+    """
+    if request.is_json or request.path == '/chat':
+        # Return the specific error message the frontend needs to display.
+        return jsonify({
+            'response': 'The user needs to login',
+            'error': 'Unauthorized',
+            'session_id': None
+        }), 401 # HTTP 401 Unauthorized
+    
+    # Otherwise, perform the standard redirect for regular page access
+    return redirect(url_for('login'))
+
+
+
 # --- Sidebar/History Management Routes ---
 
 @app.route("/get_chat_list", methods=["GET"])

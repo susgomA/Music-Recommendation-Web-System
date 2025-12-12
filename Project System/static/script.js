@@ -263,6 +263,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify({ message: message, session_id: currentSessionId })
             });
             
+            if (response.status === 401) {
+            const errorData = await response.json();
+            // Display the custom message returned by your server
+            displayMessage(errorData.response || 'The user needs to login', 'bot');
+            toggleInputState(false);
+            return; // Exit the function after displaying the message
+            }
+
             const data = await response.json();
             if (!response.ok) throw new Error(data.response || `HTTP error! status: ${response.status}`);
 
