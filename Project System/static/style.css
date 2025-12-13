@@ -35,7 +35,6 @@
     /* Sidebar */
     --sidebar-bg: #0b142e;
     --sidebar-width: 260px;
-    
 }
 
 html {
@@ -88,31 +87,36 @@ nav .container {
     position: relative;
 }
 
-/* Menu Button */
+/* --- FIX: NAV LEFT GROUP --- */
+.nav-left {
+    display: flex;
+    align-items: center;
+    /* This adds the space between the button and the text */
+    gap: 15px; 
+}
+
+/* --- FIX: MENU BUTTON --- */
 #menu-btn {
-    position: fixed; 
-    top: 1rem; 
-    left: 1rem;
+    /* Changed from fixed to relative so it respects the gap */
+    position: relative; 
     background: transparent;
     border: none;
     color: var(--text-color);
     cursor: pointer;
-    padding: 0.5rem;
+    /* Removed padding to align better with text */
+    padding: 0; 
     display: flex;
     align-items: center;
     justify-content: center;
     transition: color 0.2s;
     z-index: 70; 
 }
+
 #menu-btn:hover {
     color: var(--accent-color);
+    /* Optional: Subtle background only on hover */
     background-color: rgba(255,255,255,0.05);
     border-radius: 50%;
-}
-
-.nav-left {
-    display: flex;
-    align-items: center;
 }
 
 nav .logo-link {
@@ -167,16 +171,16 @@ nav .auth-links {
 
 /* --- TERMINATOR SHAPE (For Login & User Button) --- */
 .terminator-btn {
-    border: 2px solid var(--accent-color); /* Blue border */
-    border-radius: 9999px; /* Fully rounded "Terminator" shape */
-    padding: 8px 20px; /* Padding for button look */
-    font-weight: 700; /* Bolder text */
-    text-decoration: none; /* Ensure no underline for links */
+    border: 2px solid var(--accent-color); 
+    border-radius: 9999px; 
+    padding: 8px 20px; 
+    font-weight: 700; 
+    text-decoration: none; 
     display: inline-block; 
 }
 
 .terminator-btn:hover {
-    background-color: rgba(56, 189, 248, 0.15); /* Subtle blue fill on hover */
+    background-color: rgba(56, 189, 248, 0.15); 
     color: #ffffff;
 }
 
@@ -187,7 +191,7 @@ nav .auth-links {
 
 /* The actual Dropdown Box */
 .dropdown-content {
-    display: none; /* Hidden by default */
+    display: none; 
     position: absolute;
     right: 0;
     top: 130%; 
@@ -231,13 +235,13 @@ nav .auth-links {
 #sidebar {
     position: fixed;
     top: 0;
-    left: -260px; /* Hidden by default */
+    left: -260px; 
     width: var(--sidebar-width);
     height: 100%;
     background-color: var(--sidebar-bg);
     border-right: 1px solid rgba(255,255,255,0.05);
-    z-index: 55; /* Under navbar */
-    padding-top: 5rem; /* Clear navbar height */
+    z-index: 55; 
+    padding-top: 5rem; 
     padding-left: 1rem;
     padding-right: 1rem;
     padding-bottom: 1rem;
