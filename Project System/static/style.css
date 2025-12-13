@@ -512,12 +512,14 @@ footer button[type="submit"]:hover {
     word-wrap: break-word; 
 }
 .chat-bubble-user {
+    font-family: 'Verdana', Geneva, sans-serif;
     background-color: var(--bubble-user); 
     align-self: flex-end;
     border-bottom-right-radius: 5px;
     color: #ffffff;
 }
 .chat-bubble-bot {
+    font-family: 'Verdana', Geneva, sans-serif;
     background-color: var(--bubble-bot); 
     align-self: flex-start;
     border-bottom-left-radius: 5px;

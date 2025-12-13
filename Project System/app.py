@@ -156,7 +156,7 @@ def load_session(session_id):
 thinking_config = types.ThinkingConfig(thinking_budget=0)
 generate_content_config = types.GenerateContentConfig(
     temperature=1.0,
-    max_output_tokens=200,
+    max_output_tokens=1500,
     thinking_config=thinking_config, 
     safety_settings=[
         types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_ONLY_HIGH"),
