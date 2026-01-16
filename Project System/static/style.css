@@ -508,11 +508,11 @@ footer button[type="submit"]:hover {
     padding: 10px 16px;
     border-radius: 20px;
     margin-bottom: 10px;
-    line-height: 1.4;
+    line-height: 2.0;
     word-wrap: break-word; 
 }
 .chat-bubble-user {
-    font-family: 'Verdana', Geneva, sans-serif;
+    font-family: 'Poppins', sans-serif;
     background-color: var(--bubble-user); 
     align-self: flex-end;
     border-bottom-right-radius: 5px;
