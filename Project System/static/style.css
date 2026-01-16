@@ -519,7 +519,7 @@ footer button[type="submit"]:hover {
     color: #ffffff;
 }
 .chat-bubble-bot {
-    font-family: 'Verdana', Geneva, sans-serif;
+    font-family: 'Poppins', sans-serif;
     background-color: var(--bubble-bot); 
     align-self: flex-start;
     border-bottom-left-radius: 5px;

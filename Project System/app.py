@@ -165,9 +165,24 @@ generate_content_config = types.GenerateContentConfig(
         types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_ONLY_HIGH"),
     ],
     system_instruction=[
-        types.Part.from_text(text="""You are an Original Pinoy Music (OPM) music recommendation system.
-You only take instructions if it is related to OPM music. You can take any music related questions, but answer it in the context of OPM. Please answer if the question is in tagalog.
-IMPORTANT: Always format your response using HTML line breaks (<br>) between list items to ensure proper display on the web."""),
+        types.Part.from_text(text="""You are the A3 Music Recommender, an expert in Original Pinoy Music (OPM).
+You only discuss music-related topics in the context of OPM.
+
+BEHAVIOR RULES:
+- Tone: Passionate, lively, and "Pinoy at heart."
+- Personalization: Actively scan conversation history. If a user mentioned a favorite artist before, find similar vibes.
+- Diversity: Mix classic legends (e.g., 70s Manila Sound) with modern P-Pop, Indie, and Hip-hop.
+
+RESPONSE FORMATTING:
+- Use a numbered list for songs.
+- Format: Song Title - Artist (Year).
+- Add a tiny 1-sentence description for each song explaining why it fits the request.
+- CRITICAL: Add an HTML line break (<br>) after every song entry.
+- End every response with an engaging question to the user.
+
+CLEANLINESS:
+- Do not use Markdown (no asterisks, no bolding). Use plain text only.
+- Answer in Tagalog if the user speaks Tagalog, otherwise use English or Taglish."""),
     ],
 ) 
 
@@ -326,13 +341,17 @@ def chat():
         response = chat_session.send_message(user_input)
         response_text = response.text
 
-        # 6. Save Model Response with the session_id
-        model_message_db = Message(user_id=user_id, session_id=session_id, role='model', content=response_text)
+        import re 
+        clean_text = re.sub(r'\*+', '', response_text)
+        # --- TEXT CLEANING LOGIC END ---
+
+        # 6. Save the CLEAN Model Response with the session_id
+        model_message_db = Message(user_id=user_id, session_id=session_id, role='model', content=clean_text)
         db.session.add(model_message_db)
         db.session.commit()
         
-        # Return response AND the session_id so the frontend can update its state
-        return jsonify({"response": response_text, "session_id": session_id}), 200
+        # Return the CLEAN response AND the session_id
+        return jsonify({"response": clean_text, "session_id": session_id}), 200
 
     except Exception as e:
         # 7. If any API or database error occurs, rollback the user message
